@@ -137,6 +137,42 @@ const FEE_TEXT = () =>
 const feeNotice = () => (FEE.enabled ? `<li>${FEE_TEXT()}</li>` : '');
 const feeNoticeBlock = () => (FEE.enabled ? `<div class="note" style="margin-bottom:16px">${FEE_TEXT()}</div>` : '');
 
+// Contrato do token da propria instancia, quando o operador quiser anunciar um.
+// Fica em variavel de ambiente e nao fixo no codigo: quem auto-hospeda nao deve
+// sair divulgando o token de outra pessoa.
+const SITE_TOKEN = (process.env.PONS_SITE_TOKEN || '').trim();
+const SITE_TOKEN_SYMBOL = (process.env.PONS_SITE_TOKEN_SYMBOL || '').trim();
+
+function tokenBadge() {
+  if (!isAddress(SITE_TOKEN)) return '';
+  const addr = escapeHtml(SITE_TOKEN);
+  const nome = SITE_TOKEN_SYMBOL ? escapeHtml(SITE_TOKEN_SYMBOL) : 'Contract';
+  const curto = `${addr.slice(0, 10)}…${addr.slice(-8)}`;
+  return `
+  <div class="token-badge">
+    <span class="tb-name">${nome}</span>
+    <code class="tb-addr" id="tbAddr" title="${addr}">${curto}</code>
+    <button class="tb-btn" type="button" onclick="copyToken(this)" data-addr="${addr}">copy</button>
+    <a class="tb-btn" href="${escapeHtml(CHAIN.explorer)}/address/${addr}" target="_blank" rel="noopener">explorer</a>
+  </div>
+  <script>
+  function copyToken(btn) {
+    // clipboard.writeText exige contexto seguro; em http:// local ele nao existe.
+    const texto = btn.dataset.addr, antes = btn.textContent;
+    const feito = () => { btn.textContent = 'copied'; setTimeout(() => { btn.textContent = antes; }, 1400); };
+    if (navigator.clipboard && window.isSecureContext) {
+      navigator.clipboard.writeText(texto).then(feito, () => { btn.textContent = 'press ctrl+c'; });
+    } else {
+      const el = document.createElement('textarea');
+      el.value = texto; el.style.position = 'fixed'; el.style.opacity = '0';
+      document.body.appendChild(el); el.select();
+      try { document.execCommand('copy'); feito(); } catch { btn.textContent = 'press ctrl+c'; }
+      el.remove();
+    }
+  }
+  </script>`;
+}
+
 const pageCache = new Map();
 const page = (name) => {
   if (!pageCache.has(name)) {
@@ -144,7 +180,8 @@ const page = (name) => {
       .replaceAll('{{BRAND_HTML}}', brandHtml())
       .replaceAll('{{BRAND}}', escapeHtml(BRAND))
       .replaceAll('{{FEE_NOTICE}}', feeNotice())
-      .replaceAll('{{FEE_NOTICE_BLOCK}}', feeNoticeBlock());
+      .replaceAll('{{FEE_NOTICE_BLOCK}}', feeNoticeBlock())
+      .replaceAll('{{TOKEN_BADGE}}', tokenBadge());
     pageCache.set(name, Buffer.from(html, 'utf8'));
   }
   return pageCache.get(name);
@@ -587,7 +624,8 @@ try {
       .replaceAll('{{BRAND_HTML}}', brandHtml())
       .replaceAll('{{BRAND}}', escapeHtml(BRAND))
       .replaceAll('{{FEE_NOTICE}}', feeNotice())
-      .replaceAll('{{FEE_NOTICE_BLOCK}}', feeNoticeBlock()),
+      .replaceAll('{{FEE_NOTICE_BLOCK}}', feeNoticeBlock())
+      .replaceAll('{{TOKEN_BADGE}}', tokenBadge()),
     'utf8',
   );
 } catch { /* opcional */ }

@@ -38,6 +38,19 @@
   .cta{display:flex;gap:12px;flex-wrap:wrap;align-items:center}
   .cta small{color:var(--dim);font-size:13px}
 
+  /* Contrato do token da instancia. So aparece quando PONS_SITE_TOKEN existe. */
+  .token-badge{display:inline-flex;align-items:center;gap:10px;flex-wrap:wrap;
+    margin-top:26px;padding:9px 14px;border:1px solid var(--line);
+    border-radius:999px;background:var(--panel)}
+  .tb-name{font-size:12px;font-weight:700;letter-spacing:.04em;text-transform:uppercase;
+    color:var(--accent)}
+  .tb-addr{font:13px/1 ui-monospace,SFMono-Regular,Menlo,monospace;color:var(--tx);
+    word-break:break-all}
+  .tb-btn{font:inherit;font-size:12px;color:var(--dim);background:transparent;
+    border:1px solid var(--line);border-radius:7px;padding:4px 9px;cursor:pointer;
+    text-decoration:none}
+  .tb-btn:hover{color:var(--tx);border-color:var(--dim)}
+
   section{padding:66px 0;border-bottom:1px solid var(--line)}
   h2{font-size:26px;letter-spacing:-.02em;margin-bottom:10px;font-weight:650}
   .sub{color:var(--dim);margin-bottom:32px;max-width:62ch}
@@ -99,6 +112,7 @@
     <a class="btn ghost" href="/demo">See it running first</a>
     <small>Sign in with your wallet. No password, no signup, no private key.</small>
   </div>
+  {{TOKEN_BADGE}}
 </div></header>
 
 <section><div class="wrap">
