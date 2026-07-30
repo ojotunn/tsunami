@@ -204,6 +204,9 @@ async function main() {
       console.log(`  keystores sealed ... ${st.keystoresSealed ? 'yes' : 'NO — set PONS_MASTER_KEY'}`);
       // O CLI executa sem passar pelo servidor, então o aviso de configuração
       // da taxa precisa aparecer aqui também.
+      console.log(`  data volume ........ ${!st.storage.checked ? 'n/a (local)'
+        : st.storage.persistent ? 'persistent ✓'
+        : 'EPHEMERAL — keystores are destroyed on every redeploy'}`);
       console.log(`  service fee ........ ${st.serviceFee.problem
         ? 'MISCONFIGURED — ' + st.serviceFee.problem
         : st.serviceFee.enabled ? `${st.serviceFee.bps / 100}% to ${st.serviceFee.address}` : 'off'}`);

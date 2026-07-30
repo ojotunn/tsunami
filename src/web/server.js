@@ -31,6 +31,7 @@ import { rateLimit, startCleanup, clientIp, LIMITS } from './ratelimit.js';
 import { executeDecision, withdrawFromAgent } from '../agent/executor.js';
 import { FEE } from '../agent/fee.js';
 import { isAddress } from '../core/hex.js';
+import { dataPersistence, persistenceWarning, assertCanCreateAgents } from '../wallet/persistence.js';
 import { unlockAgent } from '../wallet/agentWallet.js';
 import { warnIfUnsealed } from '../wallet/envelope.js';
 import {
@@ -281,6 +282,9 @@ const privateRoutes = {
     if (!hasAcceptedTerms(db, ctx.session.address)) {
       throw new Error('please read and accept the terms before creating an agent');
     }
+    // Gerar uma carteira que sera apagada no proximo deploy é pior do que
+    // recusar: o usuario deposita achando que esta tudo certo.
+    assertCanCreateAgents();
     const agent = createAgent(db, { label: body.label, password: body.password, policy: body.policy ?? {} });
     db.prepare('UPDATE agents SET owner = ?, target_token = ?, custody = ? WHERE id = ?')
       .run(ctx.session.address, body.token ? String(body.token).toLowerCase() : null,
@@ -668,6 +672,17 @@ export function start({ port = Number(process.env.PORT || 8787), host = process.
       console.log(`data ${resolve(process.env.PONS_DB || './data/pons.sqlite')} · ${n} agent(s) stored`);
     } catch { /* banco recém-criado */ }
     warnIfUnsealed();
+    // O aviso mais importante do arranque: sem volume, tudo funciona e todo o
+    // dinheiro dos usuarios evapora no proximo deploy, sem erro nenhum antes.
+    const persist = dataPersistence();
+    if (persist.checked && persist.persistent === false) {
+      console.error(persistenceWarning(persist));
+      if (process.env.PONS_ALLOW_EPHEMERAL_DATA === '1') {
+        console.warn('NOTICE: PONS_ALLOW_EPHEMERAL_DATA=1 — creating agents stays enabled anyway.');
+      }
+    } else if (persist.checked) {
+      console.log(`data volume ...... ${persist.dir} is on a persistent mount ✓`);
+    }
     const m = maintenance(db);
     if (m.on) console.warn(`NOTICE: maintenance mode is ON (${m.source}) — creating agents and executing are paused.`);
     // Formato conferido de verdade: um endereço com erro de digitação passava em

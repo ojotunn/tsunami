@@ -11,6 +11,7 @@
 //      registro, e não com memória.
 import { eqAddress } from '../core/hex.js';
 import { resolveFeeConfig } from '../agent/fee.js';
+import { dataPersistence } from '../wallet/persistence.js';
 
 export function migrateOperator(db) {
   db.exec(`
@@ -76,6 +77,9 @@ export function operatorStatus(db) {
     // Rota só de admin, então aqui o `problem` pode aparecer: é exatamente onde
     // o operador vai olhar para descobrir por que não está recebendo.
     serviceFee: resolveFeeConfig(),
+    // Se isto vier `persistent:false`, nada mais nesta tela importa: as chaves
+    // dos agentes somem no proximo deploy.
+    storage: dataPersistence(),
     users: count('SELECT COUNT(*) n FROM users'),
     agents: count('SELECT COUNT(*) n FROM agents'),
     decisions24h: count('SELECT COUNT(*) n FROM decisions WHERE ts > ?', dayAgo),
