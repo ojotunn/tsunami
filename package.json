@@ -12,7 +12,8 @@
     "web": "node --env-file-if-exists=.env src/web/server.js",
     "start": "node --env-file-if-exists=.env src/web/server.js",
     "pons": "node --env-file-if-exists=.env src/cli.js",
-    "build:demo": "node scripts/build-demo.mjs"
+    "build:demo": "node scripts/build-demo.mjs",
+    "build:logo": "node scripts/build-logo.mjs ./logo"
   },
   "dependencies": {}
 }
