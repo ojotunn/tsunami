@@ -9,7 +9,7 @@
 	email you@example.com
 }
 
-tsunamiagent.app {
+tsunamiai.co {
 	encode gzip
 	reverse_proxy app:8787
 }

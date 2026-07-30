@@ -8,9 +8,10 @@
 #   fly secrets set PONS_RPC_URL=...        # opcional, mas recomendado
 #   fly deploy
 #
-# Dominio: tsunamiagent.app. Depois de `fly certs add tsunamiagent.app` e do DNS
-# apontado, troque PONS_DOMAIN abaixo — ele aparece na mensagem que o usuario
-# assina, e precisa bater com o que esta na barra do navegador.
+# Dominio em producao: tsunamiai.co (hospedado no Railway). Se um dia migrar
+# para o Fly, rode `fly certs add tsunamiai.co` e troque PONS_DOMAIN abaixo —
+# ele aparece na mensagem que o usuario assina e precisa bater com o que esta
+# na barra do navegador.
 app = "tsunami"
 primary_region = "iad"
 

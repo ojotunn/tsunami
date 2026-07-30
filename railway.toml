@@ -7,7 +7,9 @@
 #   3. definir as variaveis de ambiente (nunca em arquivo versionado):
 #        PONS_MASTER_KEY, PONS_FEE_ADDRESS, PONS_ADMIN_ADDRESS,
 #        PONS_RPC_URL, PONS_DOMAIN, PONS_SECURE_COOKIES=1, PONS_TRUST_PROXY=1
-#   4. adicionar o dominio tsunamiagent.app e criar o CNAME + TXT no DNS
+#   4. adicionar o dominio (tsunamiai.co) e criar o CNAME + TXT no DNS
+#   5. definir PONS_DOMAIN com o dominio real — ele aparece na mensagem que o
+#      usuario assina na MetaMask e precisa bater com a barra do navegador
 #
 # PONS_ALLOW_LIVE_EXECUTION fica DE FORA de proposito na primeira subida: sem
 # ela, tudo no servidor publico e ensaio. Ligue so depois de conferir que o
