@@ -1,0 +1,768 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1">
+<title>{{BRAND}} · app</title>
+<style>
+  :root{
+    --bg:#0b0e13; --panel:#141920; --panel-2:#1a212a; --line:#252d38;
+    --tx:#e8eef5; --dim:#8b98a8; --accent:#5aa2ff; --ok:#3fb950;
+    --warn:#e3b341; --bad:#f85149;
+  }
+  *{box-sizing:border-box;margin:0;padding:0}
+  body{background:var(--bg);color:var(--tx);
+       font:14px/1.6 ui-sans-serif,-apple-system,"Segoe UI",Roboto,sans-serif}
+  a{color:var(--accent);text-decoration:none}
+  nav{border-bottom:1px solid var(--line);height:60px;display:flex;align-items:center;
+      gap:14px;padding:0 26px;position:sticky;top:0;background:rgba(11,14,19,.94);
+      backdrop-filter:blur(8px);z-index:20}
+  .logo{font-weight:700;letter-spacing:-.02em;font-size:16px}
+  .logo span{color:var(--accent)}
+  .sp{flex:1}
+  .chip{font-size:12px;padding:4px 10px;border-radius:999px;background:var(--panel-2);
+        color:var(--dim);border:1px solid var(--line)}
+  .chip.ok{color:var(--ok);border-color:#1f4529}
+  .chip.bad{color:var(--bad);border-color:#5c2326}
+  button{background:var(--accent);color:#04101f;border:0;border-radius:8px;padding:9px 16px;
+         font:inherit;font-size:13px;font-weight:600;cursor:pointer}
+  button.ghost{background:transparent;color:var(--tx);border:1px solid var(--line);font-weight:500}
+  button.sm{padding:6px 12px;font-size:12px}
+  button:disabled{opacity:.4;cursor:not-allowed}
+
+  main{max-width:1220px;margin:0 auto;padding:26px 26px 90px;
+       display:grid;grid-template-columns:330px 1fr;gap:22px;align-items:start}
+  @media(max-width:940px){main{grid-template-columns:1fr}}
+  .card{background:var(--panel);border:1px solid var(--line);border-radius:12px;
+        padding:20px;margin-bottom:18px}
+  .card h2{font-size:12px;text-transform:uppercase;letter-spacing:.08em;color:var(--dim);
+           margin-bottom:14px;font-weight:600}
+  label{display:block;font-size:12px;color:var(--dim);margin:12px 0 5px}
+  input,select,textarea{width:100%;background:var(--bg);color:var(--tx);border:1px solid var(--line);
+    border-radius:7px;padding:9px 11px;font:inherit;font-size:13px}
+  textarea{min-height:90px;font-family:ui-monospace,Menlo,monospace;font-size:12px;resize:vertical}
+  .mono{font-family:ui-monospace,Menlo,monospace;font-size:12px;word-break:break-all}
+  .addr{background:var(--panel-2);border:1px solid var(--line);border-radius:8px;padding:11px;margin-top:10px}
+  .kv{display:flex;justify-content:space-between;gap:10px;padding:6px 0;
+      border-bottom:1px solid var(--line);font-size:13px}
+  .kv:last-child{border:0}
+  .kv span:first-child{color:var(--dim)}
+  .fn{border:1px solid var(--line);border-radius:10px;padding:14px;margin-bottom:11px;background:var(--panel-2)}
+  .fn-head{display:flex;align-items:center;gap:11px;cursor:pointer}
+  .fn-head strong{font-size:13px;flex:1}
+  .fn p{margin-top:6px;color:var(--dim);font-size:12px}
+  .fn-body{display:none;margin-top:13px;padding-top:13px;border-top:1px solid var(--line)}
+  .fn.open .fn-body{display:block}
+  .grid2{display:grid;grid-template-columns:1fr 1fr;gap:11px}
+  .note{font-size:12px;color:var(--dim);padding:8px 11px;background:var(--panel-2);
+        border-left:2px solid var(--line);border-radius:0 6px 6px 0;margin:6px 0}
+  .note.warn{border-left-color:var(--warn);color:#e0c07a}
+  .note.bad{border-left-color:var(--bad);color:#f0a8a4}
+  .note.ok{border-left-color:var(--ok);color:#93d6a4}
+  .dec{border:1px solid var(--line);border-radius:10px;padding:14px;margin-bottom:10px;background:var(--panel-2)}
+  .dec-head{display:flex;justify-content:space-between;gap:10px;align-items:baseline}
+  .tag{font-size:11px;padding:2px 9px;border-radius:999px;background:#20262e;color:var(--dim)}
+  .tag.ok{background:#12261a;color:var(--ok)} .tag.bad{background:#2b1618;color:var(--bad)}
+  .tag.warn{background:#2a2314;color:var(--warn)}
+  .empty{color:var(--dim);font-size:13px;padding:26px;text-align:center}
+  .banner{background:#1a1408;border:1px solid #3d2f10;color:#e0c07a;border-radius:12px;
+          padding:14px 17px;margin-bottom:18px;font-size:13px}
+  .banner code{background:rgba(0,0,0,.3);padding:1px 5px;border-radius:4px}
+  .gate{max-width:520px;margin:80px auto;text-align:center}
+  .gate h1{font-size:24px;letter-spacing:-.02em;margin-bottom:12px}
+  .gate p{color:var(--dim);margin-bottom:24px}
+</style>
+</head>
+<body>
+
+<nav>
+  <div class="logo"><a href="/" style="color:inherit">{{BRAND_HTML}}</a></div>
+  <span class="chip" id="chainChip">…</span>
+  <div class="sp"></div>
+  <span class="chip" id="walletChain" style="display:none"></span>
+  <span class="chip" id="userChip" style="display:none"></span>
+  <button id="connectBtn">Connect wallet</button>
+  <button class="ghost sm" id="logoutBtn" style="display:none">Sign out</button>
+</nav>
+
+<div id="gate" class="gate">
+  <h1>Connect your wallet</h1>
+  <p>You'll sign a plain text message to prove the address is yours.
+     This moves no funds and authorizes no transaction.</p>
+  <button id="gateBtn">Connect wallet</button>
+  <p style="margin-top:20px;font-size:12px">
+    No wallet in your browser? The <a href="/">CLI</a> does the same from the command line.
+  </p>
+</div>
+
+<main id="app" style="display:none">
+  <div>
+    <div class="card">
+      <h2>Create agent</h2>
+      <label>Label</label>
+      <input id="label" placeholder="my token's agent">
+      <label>Target token</label>
+      <input id="token" class="mono" placeholder="0x…">
+      <label>Keystore password</label>
+      <input id="password" type="password" placeholder="at least 8 characters">
+      <label style="display:flex;gap:8px;align-items:flex-start;margin-top:14px;cursor:pointer">
+        <input type="checkbox" id="terms" style="width:auto;margin-top:3px">
+        <span style="font-size:12px;color:var(--dim)">I have read the
+          <a href="/terms" target="_blank">terms and risks</a> — including that losing the
+          password means losing the agent's funds.</span>
+      </label>
+      <button id="createBtn" style="margin-top:12px">Create agent and wallet</button>
+      <div id="created" style="display:none">
+        <div class="addr">
+          <div style="font-size:12px;color:var(--dim);margin-bottom:6px">Deposit address</div>
+          <div class="mono" id="createdAddr"></div>
+        </div>
+        <div class="note warn">Save this password. Without it the keystore — and the agent's funds — cannot be recovered.</div>
+        <div class="note" id="depositAdvice"></div>
+      </div>
+    </div>
+
+    <div class="card">
+      <h2>My agents</h2>
+      <select id="agentSelect"><option value="">—</option></select>
+      <div id="agentInfo"></div>
+    </div>
+
+    <div class="card">
+      <h2>Delegate creator rewards</h2>
+      <p style="font-size:12px;color:var(--dim)">
+        One signature points your creator payout at the agent. Revert it whenever you want.
+      </p>
+      <button class="ghost" id="delegBtn" style="margin-top:12px">Prepare transaction</button>
+      <div id="delegOut"></div>
+    </div>
+  </div>
+
+  <div>
+    <div id="betaBanner"></div>
+    <div class="banner">
+      <strong>About burning:</strong> the pons token has no <code>burn()</code>.
+      Sending to <code>0x…dEaD</code> does remove coins from circulation, but
+      <code>totalSupply()</code> stays at 1B forever. Publish circulating supply,
+      not total.
+    </div>
+
+    <div class="card">
+      <h2>Functions</h2>
+      <div id="functions"><div class="empty">loading…</div></div>
+      <button id="runBtn" disabled style="margin-top:6px">Run agent (simulation)</button>
+    </div>
+
+    <div class="card">
+      <h2>Results</h2>
+      <div id="result"><div class="empty">Pick an agent, turn on some functions, and run the simulation.</div></div>
+    </div>
+  </div>
+</main>
+
+<script>
+const $ = (id) => document.getElementById(id);
+const esc = (s) => String(s ?? '').replace(/[&<>"]/g, (c) => ({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;'}[c]));
+const api = async (method, path, body) => {
+  const res = await fetch(path, {
+    method, headers: {'content-type':'application/json'},
+    body: body ? JSON.stringify(body) : undefined, credentials: 'same-origin',
+  });
+  const data = await res.json();
+  if (!res.ok) throw new Error(data.error || 'request failed');
+  return data;
+};
+// Prices in these pools are tiny (1e-9 ETH is common). Rounding to 6 decimals would
+// show "0" for almost every token, so values below 1 use significant digits instead
+// of fixed decimal places.
+const eth = (wei, d = 18) => {
+  const v = BigInt(wei || 0);
+  if (v === 0n) return '0';
+  const neg = v < 0n;
+  const n = Number(neg ? -v : v) / Number(10n ** BigInt(d));
+  const s = n >= 1 ? n.toFixed(6).replace(/0+$/, '').replace(/\.$/, '') : Number(n.toPrecision(4)).toString();
+  return (neg ? '-' : '') + s;
+};
+
+let CONFIG = null, ME = null, AGENT = null, ME_TERMS = false;
+
+async function boot() {
+  CONFIG = await api('GET', '/api/config');
+  renderFunctions();
+  renderBanners();
+  api('GET', '/api/health').then((h) => {
+    const c = $('chainChip');
+    if (h.rpc === 'ok' && h.chainId === h.expected) {
+      c.className = 'chip ok'; c.textContent = `chain ${h.chainId} · block ${h.head}`;
+    } else {
+      c.className = 'chip bad';
+      c.textContent = h.rpc === 'ok' ? `unexpected chain ${h.chainId}` : 'RPC unavailable';
+    }
+  });
+  const me = await api('GET', '/api/auth/me');
+  ME_TERMS = !!me.termsAccepted;
+  // Conta que já usava a ferramenta e ainda não aceitou a versão atual dos
+  // termos precisa saber disso antes de tentar executar, não no erro.
+  if (me.address && !ME_TERMS) renderBanners();
+  if (me.address) await onLogin(me.address);
+}
+
+// ---------------------------------------------------------------- login
+
+async function connect() {
+  if (!window.ethereum) {
+    return alert('No wallet found in this browser. Install MetaMask or use the CLI.');
+  }
+  try {
+    const [address] = await window.ethereum.request({ method: 'eth_requestAccounts' });
+    // Troca de rede antes de assinar: assim a pessoa já entra na rede certa e
+    // não descobre o problema só na hora da primeira transação. Se ela recusar,
+    // o login continua — assinar mensagem não depende de rede.
+    await ensureChain({ silent: true });
+    const { nonce, message } = await api('POST', '/api/auth/nonce', { address });
+    const signature = await window.ethereum.request({
+      method: 'personal_sign', params: [message, address],
+    });
+    const session = await api('POST', '/api/auth/verify', { address, nonce, signature });
+    ME_TERMS = false;
+    await onLogin(session.address);
+  } catch (e) {
+    alert(e.message || 'could not connect');
+  }
+}
+
+async function onLogin(address) {
+  ME = address;
+  $('gate').style.display = 'none';
+  $('app').style.display = 'grid';
+  $('connectBtn').style.display = 'none';
+  $('logoutBtn').style.display = 'inline-block';
+  const chip = $('userChip');
+  chip.style.display = 'inline-block';
+  chip.textContent = address.slice(0, 6) + '…' + address.slice(-4);
+  renderWalletChain();
+  await loadAgents();
+}
+
+$('connectBtn').onclick = connect;
+$('gateBtn').onclick = connect;
+$('logoutBtn').onclick = async () => { await api('POST', '/api/auth/logout'); location.reload(); };
+
+// ---------------------------------------------------------------- agentes
+
+// A lista é carregada e um agente é SELECIONADO sozinho.
+//
+// Deixar o seletor vazio depois de um refresh faz o painel parecer vazio, e
+// painel vazio parece perda de dados — foi exatamente essa a leitura num teste
+// real ("atualizei a página e meu agente sumiu"). Nada tinha sumido: só não
+// havia nada escolhido. Escolher sozinho custa uma linha e elimina o susto.
+async function loadAgents(preferId = null) {
+  const agents = await api('GET', '/api/agents');
+  const sel = $('agentSelect');
+  sel.innerHTML = '<option value="">—</option>' +
+    agents.map((a) => `<option value="${a.id}">${esc(a.label)} · ${a.address.slice(0,10)}…</option>`).join('');
+
+  if (agents.length === 0) {
+    AGENT = null;
+    $('runBtn').disabled = true;
+    $('agentInfo').innerHTML = `
+      <div class="kv"><span>agents on this account</span><span>none yet</span></div>
+      <p class="muted" style="margin:10px 0 0">
+        Agents belong to the wallet that created them. This account
+        (<span class="mono">${esc(ME || '')}</span>) has none.
+        If you created one earlier, switch back to that account in your wallet
+        and reload — nothing is deleted when you refresh.
+      </p>`;
+    return;
+  }
+
+  // mantém a escolha atual; senão fica com a última usada; senão com a primeira
+  const remembered = (() => { try { return sessionStorage.getItem('pons_agent'); } catch { return null; } })();
+  const wanted = (preferId && agents.some((a) => a.id === preferId) && preferId)
+    || (AGENT && agents.some((a) => a.id === AGENT.id) && AGENT.id)
+    || (remembered && agents.some((a) => a.id === remembered) && remembered)
+    || agents[0].id;
+  sel.value = wanted;
+  if (!AGENT || AGENT.id !== wanted) await selectAgent(wanted);
+}
+
+$('createBtn').onclick = async () => {
+  const b = $('createBtn');
+  if (!$('terms').checked && !ME_TERMS) return alert('please read and accept the terms first');
+  b.disabled = true; b.textContent = 'generating wallet…';
+  try {
+    if (!ME_TERMS) { await api('POST', '/api/terms/accept'); ME_TERMS = true; }
+    const agent = await api('POST', '/api/agents', {
+      label: $('label').value || 'agent', password: $('password').value,
+      token: $('token').value.trim() || undefined, custody: 'hybrid',
+    });
+    $('created').style.display = 'block';
+    $('createdAddr').textContent = agent.address;
+    $('depositAdvice').textContent = CONFIG.beta
+      ? `While this is in early access, keep deposits small — around ${CONFIG.depositAdviceEth} ETH is a sensible ceiling.`
+      : '';
+    $('password').value = '';
+    await loadAgents(agent.id);
+  } catch (e) { alert(e.message); }
+  b.disabled = false; b.textContent = 'Create agent and wallet';
+};
+
+$('agentSelect').onchange = (e) => selectAgent(e.target.value);
+
+async function selectAgent(id) {
+  if (!id) { AGENT = null; $('agentInfo').innerHTML = ''; $('runBtn').disabled = true; return; }
+  AGENT = await api('GET', '/api/agents/' + id);
+  try { sessionStorage.setItem('pons_agent', id); } catch { /* modo privado: sem memória, sem problema */ }
+  $('runBtn').disabled = false;
+  // O token alvo é editável aqui. Antes só dava para escolher na criação, e
+  // quem errasse o endereço tinha que criar outro agente — carteira nova, chave
+  // nova, fundos para mover. Trocar um campo de texto não pode custar isso.
+  $('agentInfo').innerHTML = `
+    <div class="addr"><div class="mono">${AGENT.address}</div></div>
+    <div class="kv"><span>status</span><span>${esc(AGENT.status)}</span></div>
+    <div class="kv"><span>balance</span><span>${AGENT.balances ? AGENT.balances.ethFormatted + ' ETH' : 'network unavailable'}</span></div>
+    <label>Target token — the token this agent works on</label>
+    <input id="agentToken" class="mono" placeholder="0x…" value="${esc(AGENT.target_token || '')}">
+    <button class="ghost sm" id="saveTokenBtn" style="margin-top:8px">Check and save token</button>
+    <div id="agentTokenOut"></div>
+
+    <label style="margin-top:18px">Withdraw — send the agent's funds back to you</label>
+    <div class="grid2">
+      <select id="wAsset">
+        <option value="eth">ETH</option>
+        <option value="token">the target token</option>
+      </select>
+      <input id="wPassword" type="password" placeholder="keystore password">
+    </div>
+    <input id="wTo" class="mono" style="margin-top:8px" placeholder="destination (default: ${esc(ME || 'your wallet')})">
+    <div class="grid2" style="margin-top:8px">
+      <button class="ghost sm" id="wCheckBtn">Check first</button>
+      <button class="ghost sm" id="wSendBtn">Withdraw everything</button>
+    </div>
+    <div id="wOut"></div>`;
+  $('saveTokenBtn').onclick = saveAgentToken;
+  $('wCheckBtn').onclick = () => withdraw(false);
+  $('wSendBtn').onclick = () => withdraw(true);
+  if (AGENT.target_token) $('token').value = AGENT.target_token;
+  for (const f of AGENT.functions) {
+    const cb = $('on-' + f.function_id);
+    if (cb) cb.checked = !!f.enabled;
+  }
+}
+
+/**
+ * Grava o novo token alvo. O servidor confere o endereço na chain antes de
+ * aceitar, então o erro aparece aqui — antes de a pessoa assinar qualquer coisa
+ * e descobrir na MetaMask que o contrato não conhece o token.
+ */
+async function saveAgentToken() {
+  const btn = $('saveTokenBtn');
+  const out = $('agentTokenOut');
+  const value = $('agentToken').value.trim();
+  btn.disabled = true; btn.textContent = 'checking on chain…';
+  out.innerHTML = '';
+  try {
+    const r = await api('PATCH', '/api/agents/' + AGENT.id, { token: value });
+    AGENT = r.agent;
+    $('token').value = r.agent.target_token || '';
+    const ti = r.tokenInfo;
+    out.innerHTML = value
+      ? `<div class="note ok">Saved. ${ti?.erc20 ? esc((ti.erc20.symbol || '') + ' ' + (ti.erc20.name || '')) + ' — ' : ''}launched through pons ✓</div>`
+      : '<div class="note">Target token cleared.</div>';
+  } catch (e) {
+    out.innerHTML = `<div class="note bad">${esc(e.message)}</div>`;
+  }
+  btn.disabled = false; btn.textContent = 'Check and save token';
+}
+
+/**
+ * Saque. `live=false` só calcula e mostra o que sairia; `live=true` envia.
+ * O destino em branco significa a carteira conectada — devolver ao dono é o
+ * caso normal, e digitar endereço à mão é onde se perde dinheiro.
+ */
+async function withdraw(live) {
+  const out = $('wOut');
+  const password = $('wPassword').value;
+  if (!password) { out.innerHTML = '<div class="note bad">Enter the agent keystore password.</div>'; return; }
+
+  const asset = $wValue('wAsset');
+  const to = $('wTo').value.trim() || undefined;
+
+  if (live && !confirm(
+    `Send the agent's entire ${asset === 'eth' ? 'ETH balance' : 'token balance'} to ` +
+    `${to || ME}?\n\nThis is a real transaction on chain.`
+  )) return;
+
+  const btn = live ? $('wSendBtn') : $('wCheckBtn');
+  const label = btn.textContent;
+  btn.disabled = true; btn.textContent = live ? 'sending…' : 'checking…';
+  try {
+    const r = await api('POST', `/api/agents/${AGENT.id}/withdraw`, { password, asset, to, live });
+    $('wPassword').value = '';
+    out.innerHTML = r.dryRun
+      ? `<div class="note">Would send ${esc(fmtAmount(r, asset))} to <span class="mono">${esc(r.to)}</span>` +
+        `${r.gasCost ? ' — gas up to ' + eth(r.gasCost) + ' ETH' : ''}. Nothing sent yet.</div>`
+      : `<div class="note ok">Sent ${esc(fmtAmount(r, asset))} to <span class="mono">${esc(r.to)}</span><br>` +
+        `<span class="mono">${esc(r.hash || '')}</span></div>`;
+    if (!r.dryRun) await selectAgent(AGENT.id);
+  } catch (e) {
+    out.innerHTML = `<div class="note bad">${esc(e.message)}</div>`;
+  }
+  btn.disabled = false; btn.textContent = label;
+}
+
+const $wValue = (id) => $(id).value;
+const fmtAmount = (r, asset) => asset === 'eth' ? eth(r.amount) + ' ETH' : r.amount + ' units';
+
+// ---------------------------------------------------------------- funções
+
+function renderFunctions() {
+  $('functions').innerHTML = CONFIG.functions.map((f) => `
+    <div class="fn" id="fn-${f.id}">
+      <div class="fn-head" onclick="toggleFn('${f.id}')">
+        <input type="checkbox" style="width:auto" id="on-${f.id}" onclick="event.stopPropagation()">
+        <strong>${esc(f.label)}</strong>
+        ${f.needsDelegation ? '<span class="tag">delegation</span>' : ''}
+        ${f.needsCapital ? '<span class="tag">capital</span>' : ''}
+      </div>
+      <p>${esc(f.description)}</p>
+      <div class="fn-body"><div class="grid2">
+        ${Object.entries(f.params).map(([k,p]) => `
+          <div style="${p.type==='text'?'grid-column:1/-1':''}">
+            <label>${esc(p.label)}</label>
+            ${p.type==='enum'
+              ? `<select id="p-${f.id}-${k}">${p.options.map((o)=>`<option ${o===p.default?'selected':''}>${o}</option>`).join('')}</select>`
+              : p.type==='text'
+              ? `<textarea id="p-${f.id}-${k}" placeholder="0xabc…,1000&#10;0xdef…,2500"></textarea>`
+              : p.type==='bool'
+              ? `<select id="p-${f.id}-${k}"><option value="true">yes</option><option value="false">no</option></select>`
+              : `<input id="p-${f.id}-${k}" value="${esc(p.default)}">`}
+          </div>`).join('')}
+      </div></div>
+    </div>`).join('');
+}
+window.toggleFn = (id) => $('fn-'+id).classList.toggle('open');
+
+window.reaccept = async () => {
+  try {
+    await api('POST', '/api/terms/accept');
+    ME_TERMS = true;
+    renderBanners();
+  } catch (e) { alert(e.message || 'could not record your acceptance'); }
+};
+
+function renderBanners() {
+  const parts = [];
+  if (ME && !ME_TERMS) {
+    parts.push(`<div class="banner" style="background:#181410;border-color:#5c4423;color:#edd0a5">
+      <strong>The terms of use changed.</strong> Please
+      <a href="/terms" target="_blank" rel="noopener">read them</a> and accept again —
+      sending transactions is on hold until you do. Reading your agents, simulating and
+      withdrawing are not affected.
+      <button class="ghost sm" style="margin-left:8px" onclick="reaccept()">I accept the updated terms</button></div>`);
+  }
+  if (CONFIG.maintenance?.on) {
+    parts.push(`<div class="banner" style="background:#180f10;border-color:#5c2326;color:#eda9a5">
+      <strong>Paused for maintenance.</strong> ${esc(CONFIG.maintenance.reason || 'Creating agents and running executions are on hold.')}
+      Reading your agents and exporting keystores still works.</div>`);
+  }
+  if (CONFIG.serviceFee) {
+    parts.push(`<div class="banner">
+      <strong>Service fee.</strong> The operator of this instance charges
+      ${CONFIG.serviceFee.bps / 100}% of the ETH each buy spends, and the same share of the
+      creator rewards it collects for you. It is charged in ETH only — never taken from your
+      tokens — and it is shown per action before you approve anything.
+      Withdrawing your funds is free, and airdrops are not charged.</div>`);
+  }
+  if (CONFIG.beta) {
+    parts.push(`<div class="banner">
+      <strong>Early access.</strong> On-chain execution is new here and has seen little
+      real-world use. ${CONFIG.liveExecution
+        ? `Do not deposit more than you are willing to lose — around ${esc(CONFIG.depositAdviceEth)} ETH is a sensible ceiling while this is being proven.`
+        : 'Sending transactions is currently switched off on this server: the agent will analyse and propose, but nothing moves on chain.'}
+      </div>`);
+  }
+  $('betaBanner').innerHTML = parts.join('');
+}
+
+$('runBtn').onclick = async () => {
+  const b = $('runBtn');
+  b.disabled = true; b.textContent = 'running…';
+  try {
+    for (const f of CONFIG.functions) {
+      const params = {};
+      for (const k of Object.keys(f.params)) {
+        const el = $(`p-${f.id}-${k}`);
+        if (el) params[k] = el.value;
+      }
+      await api('POST', `/api/agents/${AGENT.id}/functions`,
+        { functionId: f.id, enabled: $('on-'+f.id).checked, params });
+    }
+    renderResult(await api('POST', `/api/agents/${AGENT.id}/run`, { persist: true }));
+  } catch (e) {
+    $('result').innerHTML = `<div class="note bad">${esc(e.message)}</div>`;
+  }
+  b.disabled = false; b.textContent = 'Run agent (simulation)';
+};
+
+// Taxa de serviço na tela da decisão. Na coleta de rewards o número é
+// estimativa — dizer isso evita a reclamação de quando não bater.
+function feeRow(dec) {
+  if (!dec.feeBps) return '';
+  const pct = dec.feeBps / 100;
+  if (dec.feeWei && BigInt(dec.feeWei) > 0n) {
+    return `<div class="kv"><span>service fee (${pct}%)</span><span>${eth(dec.feeWei)} ETH</span></div>`;
+  }
+  if (dec.feeEstimateWei) {
+    return `<div class="kv"><span>service fee (${pct}%)</span><span>~${eth(dec.feeEstimateWei)} ETH · estimated,
+      charged on what is actually collected</span></div>`;
+  }
+  return `<div class="kv"><span>service fee</span><span>${pct}% of what this collects</span></div>`;
+}
+
+function renderResult(out) {
+  const s = out.state;
+  const supply = s.supply ? `
+    <div class="kv"><span>circulating supply</span><span>${eth(s.supply.circulating)}</span></div>
+    <div class="kv"><span>already burned</span><span>${eth(s.supply.burned)}</span></div>` : '';
+  const head = `
+    <div class="kv"><span>token</span><span class="mono">${esc(s.symbol || out.token)}</span></div>
+    <div class="kv"><span>price</span><span>${eth(s.pricePair)} ETH</span></div>
+    <div class="kv"><span>graduated</span><span>${s.graduated ? 'yes' : 'no'}</span></div>
+    <div class="kv"><span>agent balance</span><span>${eth(s.balances.eth)} ETH</span></div>
+    ${supply}<div style="height:16px"></div>`;
+
+  const blocks = out.results.map((r) => {
+    if (r.error) return `<div class="note bad"><strong>${esc(r.functionId)}</strong> — ${esc(r.error)}</div>`;
+    const notes = (r.notes||[]).map((n)=>`<div class="note">${esc(n)}</div>`).join('');
+    const decs = (r.decisions||[]).map((d) => {
+      const v = d.verdict;
+      const tag = v.violations.length ? 'bad' : (v.needsApproval ? 'warn' : 'ok');
+      const txt = v.violations.length ? 'blocked' : (v.needsApproval ? 'awaiting approval' : 'approved');
+      return `<div class="dec">
+        <div class="dec-head"><strong>${esc(d.decision.kind)}</strong><span class="tag ${tag}">${txt}</span></div>
+        <p style="margin-top:6px;font-size:12px;color:var(--dim)">${esc(d.decision.rationale)}</p>
+        <div class="kv" style="margin-top:8px"><span>notional</span><span>${eth(d.decision.notionalWei)} ETH</span></div>
+        <div class="kv"><span>impact</span><span>${(d.decision.priceImpactBps/100).toFixed(2)}%</span></div>
+        ${feeRow(d.decision)}
+        ${v.violations.map((x)=>`<div class="note bad">${esc(x)}</div>`).join('')}
+        ${!v.violations.length && v.needsApproval
+          ? `<button class="ghost sm" style="margin-top:10px" onclick="approve(${d.id})">Approve</button>` : ''}
+        ${!v.violations.length ? `<div id="exec-${d.id}"></div>` : ''}
+      </div>`;
+    }).join('');
+    return `<div style="margin-bottom:20px">
+      <div style="font-weight:600;margin-bottom:8px">${esc(r.label || r.functionId)}</div>
+      ${notes}${decs || '<div class="note">no action proposed this round</div>'}
+    </div>`;
+  }).join('');
+
+  $('result').innerHTML = head + (blocks || '<div class="empty">no functions enabled</div>');
+}
+
+window.approve = async (id) => {
+  await api('POST', `/api/decisions/${id}/approve`);
+  const slot = $('exec-' + id);
+  slot.innerHTML = `
+    <div class="note ok" style="margin-top:10px">Approved and recorded.</div>
+    <label>Keystore password (used only to sign, never stored)</label>
+    <input type="password" id="pw-${id}" placeholder="agent password">
+    <button class="ghost sm" style="margin-top:8px" onclick="execute(${id}, false)">Simulate</button>
+    ${CONFIG.liveExecution
+      ? `<button class="sm" style="margin-top:8px;margin-left:6px" onclick="execute(${id}, true)">Send for real</button>`
+      : `<div class="note warn">Live sending is off on this server. Start it with
+           <code>PONS_ALLOW_LIVE_EXECUTION=1</code> once you have tested on testnet.</div>`}`;
+};
+
+window.execute = async (id, live) => {
+  const pw = $('pw-' + id)?.value;
+  if (!pw) return alert('enter the agent keystore password');
+  if (live && !confirm('This will send real transactions on chain. Continue?')) return;
+
+  const slot = $('exec-' + id);
+  slot.insertAdjacentHTML('beforeend', `<div class="note" id="run-${id}">running…</div>`);
+  try {
+    const out = await api('POST', `/api/decisions/${id}/execute`, { password: pw, live });
+    $('pw-' + id).value = '';
+    $('run-' + id).outerHTML = `<div class="note ${out.dryRun ? '' : 'ok'}">
+      ${out.dryRun ? 'Simulated' : 'Executed'} ${out.steps.length} step(s)</div>` +
+      out.steps.map((s) => `<div class="note${s.failed ? ' bad' : ''}">${esc(s.label)}${
+        s.failed ? ' — did not go through: ' + esc(s.failed)
+        : s.skipped ? ' — ' + esc(s.skipped)
+        : s.notSimulated ? ' — not simulated: ' + esc(s.reason || '')
+        : s.hash ? ' — <span class="mono">' + esc(s.hash.slice(0, 18)) + '…</span>'
+        : s.gasLimit ? ' — gas ' + esc(s.gasLimit) : ''}</div>`).join('');
+  } catch (e) {
+    $('run-' + id).outerHTML = `<div class="note bad">${esc(e.message)}</div>`;
+  }
+};
+
+// ---------------------------------------------------------------- delegação
+
+$('delegBtn').onclick = async () => {
+  if (!AGENT) return alert('pick an agent first');
+  try {
+    const d = await api('POST', `/api/agents/${AGENT.id}/delegation`, { token: $('token').value.trim() || undefined });
+    const st = d.status || {};
+    // Cada transação já vem simulada pelo servidor com o endereço conectado.
+    // Só aparece botão de assinar no que de fato passa: oferecer um botão que
+    // sempre reverte é convidar a pessoa a queimar gás para descobrir sozinha.
+    const ti = d.tokenInfo || {};
+    // O endereço inspecionado aparece SEMPRE. Sem ele, "token not found" deixa
+    // no ar a pergunta mais básica: procurado onde, exatamente?
+    const tokenBlock = `
+      <div class="kv"><span>token checked</span><span class="mono">${esc((d.token||'—').slice(0,14))}…</span></div>
+      ${ti.erc20 ? `<div class="kv"><span>token name</span><span>${esc(ti.erc20.symbol || '')} ${esc(ti.erc20.name || '')}</span></div>` : ''}
+      <div class="kv"><span>launched through pons</span><span>${
+        ti.isPonsToken === true ? 'yes ✓' : ti.checked === false ? 'could not check' : 'no'
+      }</span></div>
+      ${ti.verdict ? `<div class="note ${ti.checked === false ? 'warn' : 'bad'}">${esc(ti.verdict)}</div>` : ''}`;
+
+    $('delegOut').innerHTML = tokenBlock + `
+      <div class="kv"><span>current payout</span><span class="mono">${esc((st.feeRecipient||'—').slice(0,14))}…</span></div>
+      <div class="kv"><span>points to agent</span><span>${st.redirectedToAgent?'yes ✓':'no'}</span></div>
+      ${d.deployer ? `<div class="kv"><span>token launched by</span><span class="mono">${esc(d.deployer.slice(0,14))}…</span></div>` : ''}
+      ${d.transactions.map((t,i)=>{
+        const sim = t.simulation || {};
+        const cls = sim.ok ? 'note ok' : sim.unknown ? 'note warn' : 'note bad';
+        const verdict = sim.ok
+          ? '<span class="tag ok">simulated: will succeed</span>'
+          : sim.unknown
+            ? '<span class="tag warn">could not check right now</span>'
+            : `<span class="tag bad">will fail${sim.error ? ' · ' + esc(sim.error) : ''}</span>`;
+        // Só o caso comprovadamente ruim ganha o botão de "assinar mesmo assim".
+        // Quando a checagem não completou, o botão normal continua — a carteira
+        // faz a própria simulação antes de você confirmar.
+        const btn = sim.ok || sim.unknown
+          ? `<button class="ghost sm" style="margin-top:8px" onclick="sendTx(${i})">Sign in wallet</button>`
+          : `<button class="ghost sm" style="margin-top:8px" onclick="sendTx(${i}, true)">Sign anyway</button>`;
+        return `
+        <div class="${cls}"><strong>${esc(t.label)}</strong> ${verdict}<br>
+          <span class="mono">${esc(t.signature)}</span><br>
+          <span style="opacity:.8">${esc(sim.ok ? t.note : (sim.reason || t.note))}</span>
+          <br>${btn}
+        </div>`;
+      }).join('')}`;
+    window.__txs = d.transactions;
+  } catch (e) { $('delegOut').innerHTML = `<div class="note bad">${esc(e.message)}</div>`; }
+};
+
+// ---------------------------------------------------- rede da carteira
+//
+// A carteira não conhece a Robinhood Chain por padrão, e `personal_sign` não
+// se importa com rede nenhuma — então dá para fazer login inteiro conectado na
+// Ethereum e só descobrir o problema na hora de assinar a transação, que é
+// quando a MetaMask abre na rede errada. Aqui a rede é trocada (ou adicionada)
+// ANTES de qualquer eth_sendTransaction, e o estado fica visível o tempo todo.
+
+const CHAIN_ID_HEX = () => CONFIG.chain.idHex || ('0x' + CONFIG.chain.id.toString(16));
+
+async function walletChainId() {
+  if (!window.ethereum) return null;
+  try { return await window.ethereum.request({ method: 'eth_chainId' }); }
+  catch { return null; }
+}
+
+const sameChain = (hex) =>
+  typeof hex === 'string' && parseInt(hex, 16) === CONFIG.chain.id;
+
+/** Garante que a carteira está na rede certa. Devolve true se está. */
+async function ensureChain({ silent = false } = {}) {
+  if (!window.ethereum) return false;
+  if (sameChain(await walletChainId())) { renderWalletChain(); return true; }
+
+  try {
+    await window.ethereum.request({
+      method: 'wallet_switchEthereumChain',
+      params: [{ chainId: CHAIN_ID_HEX() }],
+    });
+  } catch (err) {
+    // 4902 = rede desconhecida pela carteira. Alguns provedores devolvem o
+    // código aninhado em err.data, e a MetaMask às vezes manda -32603 com a
+    // mesma causa; por isso a checagem é larga em vez de igual a 4902.
+    const code = err?.code ?? err?.data?.originalError?.code;
+    const unknown = code === 4902 || code === -32603 || /unrecognized|not added|add.*chain/i.test(err?.message || '');
+    if (!unknown) {
+      if (!silent) alert(err?.message || 'network switch rejected');
+      renderWalletChain();
+      return false;
+    }
+    try {
+      await window.ethereum.request({
+        method: 'wallet_addEthereumChain',
+        params: [{
+          chainId: CHAIN_ID_HEX(),
+          chainName: CONFIG.chain.name,
+          nativeCurrency: CONFIG.chain.nativeCurrency || { name: 'Ether', symbol: 'ETH', decimals: 18 },
+          rpcUrls: [CONFIG.chain.rpc],
+          blockExplorerUrls: CONFIG.chain.explorer ? [CONFIG.chain.explorer] : undefined,
+        }],
+      });
+    } catch (addErr) {
+      if (!silent) alert(addErr?.message || 'could not add the network');
+      renderWalletChain();
+      return false;
+    }
+  }
+
+  const ok = sameChain(await walletChainId());
+  renderWalletChain();
+  return ok;
+}
+
+async function renderWalletChain() {
+  const chip = $('walletChain');
+  if (!chip) return;
+  if (!window.ethereum || !ME) { chip.style.display = 'none'; return; }
+  chip.style.display = 'inline-block';
+  const hex = await walletChainId();
+  if (sameChain(hex)) {
+    chip.className = 'chip ok';
+    chip.textContent = 'wallet on ' + CONFIG.chain.name;
+    chip.onclick = null;
+    chip.style.cursor = 'default';
+    chip.title = '';
+  } else {
+    chip.className = 'chip bad';
+    chip.textContent = 'wallet on wrong network — click to switch';
+    chip.style.cursor = 'pointer';
+    chip.title = 'Your wallet is on chain ' + (hex ? parseInt(hex, 16) : '?') +
+      '. Transactions must be signed on ' + CONFIG.chain.name + ' (chain ' + CONFIG.chain.id + ').';
+    chip.onclick = () => ensureChain();
+  }
+}
+
+if (window.ethereum?.on) {
+  window.ethereum.on('chainChanged', () => renderWalletChain());
+  window.ethereum.on('accountsChanged', () => location.reload());
+}
+
+window.sendTx = async (i, knownToFail = false) => {
+  const tx = window.__txs[i];
+  if (!window.ethereum) return alert('no wallet in this browser');
+  if (knownToFail && !confirm(
+    (tx.simulation?.reason || 'This call reverts when simulated.') +
+    '\n\nSigning it will still cost gas and will almost certainly fail. Continue anyway?'
+  )) return;
+  // A troca de rede vem primeiro. Sem isto a MetaMask abre na rede em que o
+  // usuário estiver, e a transação ou falha ou vai parar na chain errada.
+  if (!await ensureChain()) {
+    return alert('Switch your wallet to ' + CONFIG.chain.name + ' (chain ' +
+      CONFIG.chain.id + ') before signing. Nothing was sent.');
+  }
+  try {
+    const hash = await window.ethereum.request({
+      method: 'eth_sendTransaction',
+      params: [{ from: ME, to: tx.to, data: tx.data, chainId: CHAIN_ID_HEX() }],
+    });
+    alert('transaction sent: ' + hash);
+  } catch (e) { alert(e.message || 'transaction rejected'); }
+};
+
+boot().catch((e) => {
+  $('chainChip').className = 'chip bad';
+  $('chainChip').textContent = e.message;
+});
+</script>
+</body>
+</html>

@@ -1,0 +1,45 @@
+# Deploy no Fly.io — o caminho mais curto para ficar no ar com HTTPS e disco.
+#
+#   fly launch --no-deploy --copy-config
+#   fly volumes create pons_data --size 1
+#   fly secrets set PONS_MASTER_KEY=...     # NUNCA em [env], que vai para o git
+#   fly secrets set PONS_FEE_ADDRESS=...
+#   fly secrets set PONS_ADMIN_ADDRESS=...
+#   fly secrets set PONS_RPC_URL=...        # opcional, mas recomendado
+#   fly deploy
+#
+# Dominio: tsunamiagent.app. Depois de `fly certs add tsunamiagent.app` e do DNS
+# apontado, troque PONS_DOMAIN abaixo — ele aparece na mensagem que o usuario
+# assina, e precisa bater com o que esta na barra do navegador.
+app = "tsunami"
+primary_region = "iad"
+
+[build]
+  dockerfile = "Dockerfile"
+
+[env]
+  PORT = "8787"
+  HOST = "0.0.0.0"
+  PONS_DB = "/data/pons.sqlite"
+  PONS_KEYSTORE_DIR = "/data/keystores"
+  PONS_SECURE_COOKIES = "1"
+  PONS_TRUST_PROXY = "1"
+  # Troque para o domínio real depois de apontar o DNS.
+  PONS_DOMAIN = "tsunami.fly.dev"
+
+[[mounts]]
+  source = "pons_data"
+  destination = "/data"
+
+[http_service]
+  internal_port = 8787
+  force_https = true
+  auto_stop_machines = false      # o indexador e as sessões não podem hibernar
+  auto_start_machines = true
+  min_machines_running = 1
+
+  [http_service.checks]
+    [http_service.checks.health]
+      path = "/healthz"
+      interval = "30s"
+      timeout = "5s"

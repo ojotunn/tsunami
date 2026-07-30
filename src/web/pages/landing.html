@@ -1,0 +1,240 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1">
+<title>{{BRAND}} · agents for pons tokens</title>
+<meta name="description" content="Agents that run buyback and burn, creator reward collection, scheduled buys, and airdrops for pons tokens on Robinhood Chain.">
+<style>
+  :root{
+    --bg:#0b0e13; --panel:#141920; --panel-2:#1a212a; --line:#252d38;
+    --tx:#e8eef5; --dim:#8b98a8; --accent:#5aa2ff; --ok:#3fb950;
+    --warn:#e3b341; --bad:#f85149;
+  }
+  *{box-sizing:border-box;margin:0;padding:0}
+  body{background:var(--bg);color:var(--tx);
+       font:16px/1.65 ui-sans-serif,-apple-system,"Segoe UI",Roboto,sans-serif;
+       -webkit-font-smoothing:antialiased}
+  a{color:var(--accent);text-decoration:none}
+  .wrap{max-width:1060px;margin:0 auto;padding:0 24px}
+
+  nav{border-bottom:1px solid var(--line);position:sticky;top:0;background:rgba(11,14,19,.9);
+      backdrop-filter:blur(8px);z-index:10}
+  nav .wrap{display:flex;align-items:center;gap:20px;height:62px}
+  .logo{font-weight:700;letter-spacing:-.02em;font-size:17px}
+  .logo span{color:var(--accent)}
+  nav .sp{flex:1}
+  .btn{background:var(--accent);color:#04101f;border:0;border-radius:8px;padding:10px 18px;
+       font:inherit;font-size:14px;font-weight:600;cursor:pointer;display:inline-block}
+  .btn.ghost{background:transparent;color:var(--tx);border:1px solid var(--line);font-weight:500}
+
+  header{padding:88px 0 64px;border-bottom:1px solid var(--line)}
+  .badge{display:inline-block;font-size:12px;color:var(--dim);border:1px solid var(--line);
+         border-radius:999px;padding:5px 13px;margin-bottom:22px}
+  h1{font-size:clamp(32px,5.2vw,50px);line-height:1.1;letter-spacing:-.03em;
+     font-weight:700;max-width:17ch;margin-bottom:20px}
+  h1 em{font-style:normal;color:var(--accent)}
+  .lead{font-size:18px;color:var(--dim);max-width:60ch;margin-bottom:30px}
+  .cta{display:flex;gap:12px;flex-wrap:wrap;align-items:center}
+  .cta small{color:var(--dim);font-size:13px}
+
+  section{padding:66px 0;border-bottom:1px solid var(--line)}
+  h2{font-size:26px;letter-spacing:-.02em;margin-bottom:10px;font-weight:650}
+  .sub{color:var(--dim);margin-bottom:32px;max-width:62ch}
+
+  .grid{display:grid;grid-template-columns:repeat(auto-fit,minmax(250px,1fr));gap:16px}
+  .card{background:var(--panel);border:1px solid var(--line);border-radius:12px;padding:22px}
+  .card h3{font-size:16px;margin-bottom:8px;font-weight:620}
+  .card p{color:var(--dim);font-size:14px}
+  .card .tag{display:inline-block;font-size:11px;color:var(--dim);background:var(--panel-2);
+             border:1px solid var(--line);border-radius:999px;padding:2px 9px;margin-top:12px}
+
+  .steps{counter-reset:s;display:grid;gap:14px}
+  .step{display:flex;gap:16px;background:var(--panel);border:1px solid var(--line);
+        border-radius:12px;padding:20px}
+  .step::before{counter-increment:s;content:counter(s);flex:0 0 30px;height:30px;
+    background:var(--panel-2);border:1px solid var(--line);border-radius:50%;
+    display:grid;place-items:center;font-size:13px;color:var(--accent);font-weight:600}
+  .step h3{font-size:15px;margin-bottom:4px}
+  .step p{color:var(--dim);font-size:14px}
+
+  .note{border-left:3px solid var(--warn);background:#1a1408;border-radius:0 10px 10px 0;
+        padding:18px 22px;color:#e8cd8f;font-size:15px}
+  .note strong{color:#f4dfa8}
+  .note code{background:rgba(0,0,0,.35);padding:1px 6px;border-radius:4px;font-size:13px}
+
+  .no{border-left:3px solid var(--bad);background:#180f10;border-radius:0 10px 10px 0;
+      padding:18px 22px;color:#eda9a5;font-size:15px}
+  .no strong{color:#f5c2bf}
+
+  table{width:100%;border-collapse:collapse;font-size:14px}
+  th,td{text-align:left;padding:11px 12px;border-bottom:1px solid var(--line)}
+  th{color:var(--dim);font-weight:500;font-size:12px;text-transform:uppercase;letter-spacing:.06em}
+  td code{font-size:12px;color:var(--dim)}
+
+  footer{padding:44px 0;color:var(--dim);font-size:13px}
+  footer p{max-width:70ch;margin-bottom:10px}
+</style>
+</head>
+<body>
+
+<nav><div class="wrap">
+  <div class="logo">{{BRAND_HTML}}</div>
+  <a href="#features" style="color:var(--dim);font-size:14px">features</a>
+  <a href="/demo" style="color:var(--dim);font-size:14px">demo</a>
+  <div class="sp"></div>
+  <a class="btn" href="/app">Open the app</a>
+</div></nav>
+
+<header><div class="wrap">
+  <div class="badge">Robinhood Chain · chain 4663 · built for pons launches</div>
+  <h1>Your token works the night shift <em>without you</em></h1>
+  <p class="lead">
+    Buy back and burn on a schedule. Turn creator rewards into buy pressure automatically.
+    Catch the dips while you're asleep. Reward the holders who actually showed up.
+    You set the rules once — the agent does the rest, and shows its work every time.
+  </p>
+  <div class="cta">
+    <a class="btn" href="/app">Launch your agent</a>
+    <a class="btn ghost" href="/demo">See it running first</a>
+    <small>Sign in with your wallet. No password, no signup, no private key.</small>
+  </div>
+</div></header>
+
+<section><div class="wrap">
+  <h2>Made for the wallet that launched the token</h2>
+  <p class="sub">One thing only the creator can do — and it is the one that pays for itself.</p>
+
+  <div class="note" style="margin-bottom:16px">
+    <strong>Creator rewards need your launch wallet.</strong> The pons locker pays creator
+    rewards to the wallet that deployed the token, and only that wallet can redirect them.
+    Point them at your agent with a single signature and the whole loop runs on its own:
+    the agent collects, holds, and after graduation turns them into buying and burning.
+    Nobody else can set this up for your token, and it costs you nothing but gas — the
+    rewards were already yours.
+  </div>
+
+  <div class="note">
+    <strong>Everything else runs on the deposit you choose.</strong> Buy and burn, scheduled
+    buys, dip buying and airdrops work from the agent's own balance and its own token
+    holdings — no signature, no permission, no key. Fund it with what you are willing to
+    put to work, and withdraw the rest whenever you want.
+  </div>
+</div></section>
+
+<section id="features"><div class="wrap">
+  <h2>Six ways to keep your chart honest</h2>
+  <p class="sub">Turn on only what you need. Every function clears two checks before it becomes
+     an action: the protocol's own limits, and the risk policy you set yourself.</p>
+  <div class="grid">
+    <div class="card">
+      <h3>Buyback &amp; burn</h3>
+      <p>Standing bid under your own token. The agent buys from the pool and sends straight
+         to the burn address, so the supply in circulation only goes one way.</p>
+      <span class="tag">your deposit</span>
+    </div>
+    <div class="card">
+      <h3>Creator rewards → burn</h3>
+      <p>The one that pays for itself. Your rewards collect themselves, wait in reserve, and
+         after graduation come back as buy pressure — funded entirely by fees you already earned.</p>
+      <span class="tag">launch wallet · one signature</span>
+    </div>
+    <div class="card">
+      <h3>Scheduled buys</h3>
+      <p>A fixed amount on the interval you choose, with a hard budget and a per-order impact
+         cap. The panel tells you upfront what that cadence costs you in pool fees for a year.</p>
+      <span class="tag">your deposit</span>
+    </div>
+    <div class="card">
+      <h3>Dip buying</h3>
+      <p>Be the bid when everyone else is asleep. Triggers on a fall from the recent high —
+         not from the last price — so ordinary noise never spends your money.</p>
+      <span class="tag">your deposit</span>
+    </div>
+    <div class="card">
+      <h3>Airdrops that reach real people</h3>
+      <p>Send to your own list, or straight to your actual on-chain holders read live from the
+         explorer. Addresses, duplicates and the per-wallet cap are all checked before anything moves.</p>
+      <span class="tag">your tokens</span>
+    </div>
+    <div class="card">
+      <h3>Dashboard and audit trail</h3>
+      <p>Price, liquidity, graduation progress, real circulating supply, and every decision the
+         agent ever proposed — including the ones your own rules blocked.</p>
+      <span class="tag">read only</span>
+    </div>
+  </div>
+</div></section>
+
+<section><div class="wrap">
+  <h2>Running in under five minutes</h2>
+  <p class="sub">Four steps. Not one of them asks for your private key.</p>
+  <div class="steps">
+    <div class="step"><div>
+      <h3>Connect the wallet that launched your token</h3>
+      <p>You sign a plain text message to prove the address is yours. Signing a message
+         moves no funds and authorizes no transaction — and it is what unlocks the
+         creator rewards side.</p>
+    </div></div>
+    <div class="step"><div>
+      <h3>Create the agent</h3>
+      <p>You get a brand new, dedicated wallet on Robinhood Chain, encrypted with your own
+         password. It can only ever move what you send to it — never your main wallet.</p>
+    </div></div>
+    <div class="step"><div>
+      <h3>Point the rewards, fund the rest</h3>
+      <p>One signature redirects your creator payout to the agent. For the functions that
+         buy, deposit only what you are willing to put to work — and withdraw it any time.</p>
+    </div></div>
+    <div class="step"><div>
+      <h3>Pick your functions and watch</h3>
+      <p>Every proposal shows the reasoning, the price impact, and the verdict from both
+         checks. On the default setting, nothing moves without your approval.</p>
+    </div></div>
+  </div>
+</div></section>
+
+<section><div class="wrap">
+  <h2>Where the keys live</h2>
+  <p class="sub">The model is deliberately split: each kind of access has the smallest
+     blast radius we could give it.</p>
+  <table>
+    <tr><th>What</th><th>Who holds it</th><th>Worst case if leaked</th></tr>
+    <tr>
+      <td>Your main wallet</td>
+      <td>You, always</td>
+      <td>Nothing — the site never has access to it</td>
+    </tr>
+    <tr>
+      <td>Creator reward payout</td>
+      <td>Redirected via <code>setFeeRedirect</code></td>
+      <td>You revert it by signing again, any time</td>
+    </tr>
+    <tr>
+      <td>Operating capital</td>
+      <td>Agent wallet, encrypted keystore</td>
+      <td>Loss capped at what you deposited</td>
+    </tr>
+  </table>
+  <p style="margin-top:22px;color:var(--dim);font-size:14px">
+    That's why there's no field to paste a private key. In that model a leak costs you
+    the entire wallet — tokens, NFTs, everything — instead of the operating deposit.
+  </p>
+</div></section>
+
+<footer><div class="wrap">
+  <p><strong style="color:var(--tx)">None of this is financial advice.</strong>
+     Fixed-supply tokens in a single pool are highly volatile. Buybacks and burns do not
+     guarantee price — pons's own documentation says as much. Providing liquidity can
+     lose more than the fees it earns.</p>
+  <p>Providing liquidity or running systematic buybacks may be a regulated activity
+     depending on your jurisdiction and volume. Worth talking to a lawyer before you
+     scale. If your token runs programmatic buybacks, disclosing that publicly is what
+     separates a transparent treasury from a manipulation complaint.</p>
+  <p style="margin-top:18px">{{BRAND}} · open source, zero dependencies ·
+     <a href="/terms">terms and risks</a> ·
+     <a href="https://docs.ponsfamily.com/docs">pons docs</a></p>
+</div></footer>
+
+</body>
+</html>

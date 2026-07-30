@@ -1,0 +1,15 @@
+# Troque o e-mail pelo seu. O Caddy emite e renova o certificado sozinho.
+#
+# O TLD .app inteiro esta no HSTS preload dos navegadores: eles RECUSAM http://
+# nesse dominio, sem excecao e sem tela de "prosseguir mesmo assim". Ou seja, o
+# certificado precisa estar valido desde o primeiro acesso — nao da para testar
+# em HTTP e arrumar depois. O Caddy resolve isso sozinho, mas o DNS ja tem que
+# estar apontando para este servidor quando ele subir, senao a emissao falha.
+{
+	email you@example.com
+}
+
+tsunamiagent.app {
+	encode gzip
+	reverse_proxy app:8787
+}

@@ -1,0 +1,29 @@
+# Deploy no Railway.
+#
+# Passos no painel (o que este arquivo NAO faz sozinho):
+#   1. criar o projeto e apontar para este diretorio
+#   2. criar um Volume montado em /data   <- sem isso, cada redeploy apaga as
+#      chaves privadas dos agentes e o dinheiro deles se perde
+#   3. definir as variaveis de ambiente (nunca em arquivo versionado):
+#        PONS_MASTER_KEY, PONS_FEE_ADDRESS, PONS_ADMIN_ADDRESS,
+#        PONS_RPC_URL, PONS_DOMAIN, PONS_SECURE_COOKIES=1, PONS_TRUST_PROXY=1
+#   4. adicionar o dominio tsunamiagent.app e criar o CNAME + TXT no DNS
+#
+# PONS_ALLOW_LIVE_EXECUTION fica DE FORA de proposito na primeira subida: sem
+# ela, tudo no servidor publico e ensaio. Ligue so depois de conferir que o
+# volume persiste de verdade entre dois redeploys.
+
+[build]
+builder = "dockerfile"
+dockerfilePath = "Dockerfile"
+
+[deploy]
+# Uma instancia so. Nao aumentar: duas escrevendo no mesmo SQLite corrompem o
+# banco, e o Railway ja impede replicas quando ha volume montado.
+numReplicas = 1
+restartPolicyType = "on_failure"
+restartPolicyMaxRetries = 10
+
+# O /healthz ja existe no servidor e nao exige sessao.
+healthcheckPath = "/healthz"
+healthcheckTimeout = 30

@@ -1,0 +1,119 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1">
+<title>{{BRAND}} · terms</title>
+<style>
+  :root{--bg:#0b0e13;--panel:#141920;--line:#252d38;--tx:#e8eef5;--dim:#8b98a8;
+        --accent:#5aa2ff;--warn:#e3b341;--bad:#f85149}
+  *{box-sizing:border-box;margin:0;padding:0}
+  body{background:var(--bg);color:var(--tx);
+       font:16px/1.7 ui-sans-serif,-apple-system,"Segoe UI",Roboto,sans-serif}
+  a{color:var(--accent);text-decoration:none}
+  .wrap{max-width:760px;margin:0 auto;padding:0 24px}
+  nav{border-bottom:1px solid var(--line);height:62px;display:flex;align-items:center}
+  .logo{font-weight:700;letter-spacing:-.02em;font-size:17px}
+  .logo span{color:var(--accent)}
+  header{padding:56px 0 32px}
+  h1{font-size:32px;letter-spacing:-.02em;margin-bottom:10px}
+  .updated{color:var(--dim);font-size:14px}
+  h2{font-size:19px;margin:36px 0 10px;letter-spacing:-.01em}
+  p,li{color:#c9d4e0;margin-bottom:12px}
+  ul{padding-left:22px}
+  code{background:#1a212a;padding:1px 6px;border-radius:4px;font-size:14px}
+  .box{border-left:3px solid var(--warn);background:#1a1408;border-radius:0 10px 10px 0;
+       padding:18px 22px;margin:22px 0;color:#e8cd8f}
+  .box.bad{border-left-color:var(--bad);background:#180f10;color:#eda9a5}
+  .box strong{color:#f4dfa8}
+  .box.bad strong{color:#f5c2bf}
+  footer{padding:40px 0 60px;color:var(--dim);font-size:13px;border-top:1px solid var(--line);margin-top:40px}
+</style>
+</head>
+<body>
+<nav><div class="wrap"><div class="logo"><a href="/" style="color:inherit">{{BRAND_HTML}}</a></div></div></nav>
+
+<div class="wrap">
+<header>
+  <h1>Terms and risks</h1>
+  <p class="updated">Read this before you create an agent. It is short on purpose.</p>
+</header>
+
+<div class="box bad">
+  <strong>This software is provided as is, with no warranty.</strong> You can lose money
+  using it. Nothing here is financial, investment, tax, or legal advice. If you are not
+  comfortable losing the amount you deposit, do not deposit it.
+</div>
+
+<h2>What the agent can and cannot reach</h2>
+<ul>
+  <li>Creating an agent generates a <strong>new wallet</strong> on Robinhood Chain. Its
+      private key is encrypted with the password you choose.</li>
+  <li>The agent can only move what you deposit into that wallet. It never gets access to
+      the wallet you sign in with.</li>
+  <li><strong>If you lose that password, the funds in the agent wallet are gone.</strong>
+      Nobody — including whoever runs this server — can recover them. There is no reset.</li>
+  <li>Delegating creator rewards points your payout at the agent wallet through
+      <code>setFeeRedirect</code>. You can point it somewhere else at any time by signing
+      again. It grants no other permission.</li>
+</ul>
+
+<h2>Custody</h2>
+<p>
+  If you are using a hosted instance of this software, the operator holds the encrypted
+  keystore file for your agent. That file alone is not enough to spend — your password is
+  required — but you should decide whether you trust that operator before you deposit.
+  You can export the keystore at any time and import it into MetaMask.
+</p>
+
+<h2>What the tool does not do</h2>
+<ul>
+  <li>It does not create wallets to inflate holder counts, and it refuses airdrop lists
+      that point at wallets it controls. Holder count is a number other people use to judge
+      a token; we will not help make it lie.</li>
+  <li>It does not generate trading volume between wallets you own.</li>
+  <li>It does not guarantee any price outcome. Buybacks and burns do not make a token go up.</li>
+</ul>
+
+<div class="box">
+  <strong>Burning does not reduce total supply.</strong> The pons token has no
+  <code>burn()</code> function. Sending to <code>0x…dEaD</code> removes coins from
+  circulation, but <code>totalSupply()</code> stays at 1,000,000,000 permanently. If you
+  publish burn figures, publish circulating supply — the tool computes it for you.
+</div>
+
+<h2>Costs you should expect</h2>
+<ul>
+  {{FEE_NOTICE}}
+  <li>The pool fee is <strong>1% per trade</strong>. Buying and selling back costs about 2%
+      before any price movement. Frequent small buys are expensive; the panel shows you the
+      yearly cost of whatever cadence you configure.</li>
+  <li>Every transaction costs gas. The agent keeps a reserve so it can always exit a
+      position; it will refuse actions that would eat into it.</li>
+  <li>Providing liquidity can lose more than the fees it earns. That is impermanent loss,
+      and no setting in this tool prevents it.</li>
+</ul>
+
+<h2>Your responsibility</h2>
+<ul>
+  <li>Running systematic buybacks or providing liquidity may be a regulated activity where
+      you live. That is your call to make, not ours.</li>
+  <li>If your token runs programmatic buybacks, say so publicly. Disclosure is what
+      separates a transparent treasury from a manipulation complaint.</li>
+  <li>You are responsible for what your agent does with the funds you give it.</li>
+</ul>
+
+<h2>Data</h2>
+<p>
+  Signing in stores your wallet address and a session token. The tool records the decisions
+  your agent proposes and executes, so you have an audit trail. It does not ask for your
+  name, email, or any document.
+</p>
+
+<footer><div>
+  Open source, no dependencies. Read the code before you trust it with money —
+  that is the whole point of publishing it.
+</div></footer>
+</div>
+</body>
+</html>

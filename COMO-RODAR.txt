@@ -1,0 +1,214 @@
+Tsunami - guia de teste
+=======================
+
+A FERRAMENTA MUDOU DE NOME  <<< LEIA SE VOCE JA USAVA
+-----------------------------------------------------
+  Antes se chamava pons-mm. Agora se chama Tsunami.
+
+  Isso cria uma armadilha: ao extrair o zip novo, o Windows cria uma
+  pasta chamada Tsunami, e a pasta antiga pons-mm fica para tras com
+  as CHAVES dos seus agentes dentro dela.
+
+  Antes de apagar qualquer coisa:
+    1. Abra a pasta antiga pons-mm.
+    2. Copie a pasta "data" inteira de dentro dela.
+    3. Cole dentro da pasta Tsunami nova.
+    4. Rode VERIFICAR-AGENTES.bat e confirme que os agentes aparecem.
+    5. So depois disso apague a pasta antiga.
+
+  Se voce nunca criou agente, pode ignorar tudo isso.
+
+SE VOCE ESTA ATUALIZANDO PARA UMA VERSAO NOVA  <<< LEIA ISTO
+-----------------------------------------------------------
+  O zip NAO tem a pasta "data". Isso e de proposito: "data" guarda o
+  banco e as CHAVES PRIVADAS dos seus agentes, e chave privada nao
+  viaja dentro de arquivo que roda de um lado para o outro.
+
+  Consequencia pratica: se voce extrair a versao nova numa pasta nova,
+  os seus agentes continuam na pasta ANTIGA. Eles nao foram apagados,
+  so ficaram para tras.
+
+  Jeito certo de atualizar:
+    1. Extraia a versao nova numa pasta.
+    2. Copie a pasta "data" INTEIRA da pasta antiga para dentro da nova.
+    3. So depois apague a pasta antiga - e so depois de conferir que os
+       agentes aparecem.
+
+  Na duvida, rode VERIFICAR-AGENTES.bat. Ele so le e diz onde estao.
+
+
+SE O AGENTE SUMIU DA TELA
+-------------------------
+  Rode VERIFICAR-AGENTES.bat. Ele responde as tres causas possiveis:
+
+    1. Conta errada na MetaMask.
+       Cada agente so aparece para a carteira que o criou. Conectou com
+       outra conta, a lista vem vazia. O relatorio mostra qual conta e a
+       dona - troque na MetaMask e atualize a pagina.
+
+    2. Pasta errada.
+       Voce esta rodando de uma pasta que nunca teve agente. O relatorio
+       avisa que o banco esta vazio ou nao existe.
+
+    3. Perda real da pasta data.
+       So neste caso ha perda. O relatorio diz se o arquivo da chave de
+       cada agente ainda esta no disco.
+
+  Atualizar a pagina do navegador NUNCA apaga agente. Os dados ficam no
+  seu computador, na pasta data, nao no navegador.
+
+
+ANTES DE TUDO
+-------------
+  1. Extraia o Tsunami.zip de verdade.
+     Botao direito no arquivo -> "Extrair tudo".
+     Rodar de dentro do visualizador de zip do Windows nao funciona.
+
+  2. Instale o Node.js, se ainda nao tiver.
+     https://nodejs.org  ->  botao LTS  ->  instalador comum, avancar ate o fim.
+     Reinicie o computador depois.
+
+  3. Clique duas vezes em TESTAR.bat
+
+
+O MENU
+------
+  TESTAR.bat abre um menu com tudo. Voce nao precisa digitar comando nenhum.
+
+  1 - Conexao com a chain
+      Confere se a RPC responde, se o chain id e 4663 e se a factory esta la.
+      Comece por aqui. Se falhar, o resto nao vai funcionar.
+
+  2 - Indexar tokens
+      Le os lancamentos recentes da chain e guarda no banco local.
+      Precisa rodar antes das opcoes 3, 4 e 5.
+
+  3 - Listar tokens
+      Mostra o que foi indexado. Copie um endereco da coluna "address".
+
+  4 - Preflight  <<< O TESTE MAIS IMPORTANTE
+      Pega um token e confere a rota de compra inteira contra os contratos
+      reais: se o token saiu daquela factory, qual router usar, qual variante
+      da funcao de swap, se as restricoes anti-sniping ja cairam, o preco e o
+      impacto. Depois monta as 4 transacoes reais e mostra cada uma.
+      Nada e enviado. Nada e gasto.
+
+  5 - Cotar uma compra
+      Quanto de token voce receberia e quanto o preco se moveria.
+
+  6 - Abrir o site
+      Sobe o site em http://127.0.0.1:8787 e abre o navegador.
+      So voce enxerga.
+
+  7 - Publicar link temporario
+      Cria um endereco https publico terminado em .trycloudflare.com para
+      voce mandar para outras pessoas. Enquanto a janela ficar aberta, o
+      site esta no ar. Ao fechar, o endereco morre.
+
+  8 - Bateria de testes
+      Rodam sem internet. Se algum falhar, me avise.
+
+  9 - Teste com dinheiro real
+      So use depois do preflight passar. Envia transacao de verdade.
+
+  A - Onde estao os meus agentes
+      Relatorio local: quantos agentes existem, de quem sao, e se a
+      chave privada de cada um ainda esta no disco. So le.
+
+
+AS TRES PAGINAS DO SITE
+-----------------------
+  /       apresentacao publica
+  /demo   demo interativo, funciona sem carteira
+  /app    o aplicativo de verdade, precisa de MetaMask
+  /terms  termos e riscos - o usuario precisa aceitar antes de criar agente
+
+
+PARA O /app FUNCIONAR
+---------------------
+  O site adiciona a Robinhood Chain na MetaMask sozinho. Ao clicar em
+  "Connect wallet", a MetaMask pergunta se quer adicionar a rede e depois
+  se quer trocar para ela. Aceite as duas.
+
+  No topo da pagina fica um aviso da rede da carteira:
+    verde ... a carteira esta na Robinhood Chain
+    vermelho  a carteira esta em outra rede - clique no aviso para trocar
+
+  Nenhuma transacao e enviada com a carteira na rede errada. Se estiver
+  errada, o site troca antes de abrir a MetaMask.
+
+  Se preferir adicionar na mao:
+  Configuracoes -> Redes -> Adicionar rede manualmente
+
+      Nome ......  Robinhood Chain
+      RPC .......  https://rpc.mainnet.chain.robinhood.com
+      Chain ID ..  4663
+      Moeda .....  ETH
+      Explorer ..  https://robinhoodchain.blockscout.com
+
+  Observacao: o login (assinar a mensagem) funciona em qualquer rede,
+  porque assinar texto nao depende de rede. Por isso da para logar e so
+  perceber o problema na hora de assinar a transacao. Agora o site avisa
+  antes.
+
+
+SE VOCE VAI ABRIR PARA OUTRAS PESSOAS
+-------------------------------------
+  O site sobe com o envio de transacoes DESLIGADO. Seus amigos criam agente,
+  delegam rewards, configuram funcoes e veem as decisoes. A unica coisa
+  travada e a etapa que gasta. Ninguem consegue perder dinheiro.
+
+  Antes de convidar as pessoas:
+
+    1. Defina o seu endereco como operador:
+         set PONS_ADMIN_ADDRESS=0xSeuEndereco
+       Sem isso voce nao consegue pausar o servico.
+
+    2. Gere e guarde a chave mestra dos keystores:
+         node src\cli.js master-key
+       Guarde FORA do servidor. Perdeu a chave, os agentes selados com ela
+       viram irrecuperaveis.
+
+    3. Saiba pausar sem derrubar nada:
+         node src\cli.js pause "motivo aqui"
+         node src\cli.js resume
+         node src\cli.js status
+
+       Pausar bloqueia criar agente e executar. Ler e exportar keystore
+       continuam liberados de proposito: ninguem pode ficar preso do lado
+       de fora do proprio dinheiro.
+
+  Depois que VOCE rodar um buyback pequeno e ver as 4 transacoes caindo,
+  ai sim ligue o envio real com PONS_ALLOW_LIVE_EXECUTION=1.
+
+  O checklist completo esta no GO-LIVE.md.
+
+
+SOBRE EXECUTAR DE VERDADE
+-------------------------
+  O agente monta, simula e registra as transacoes, mas NAO envia nada
+  a menos que o servidor seja iniciado com PONS_ALLOW_LIVE_EXECUTION=1
+  E o pedido peca explicitamente. Sem as duas coisas juntas, tudo e
+  simulacao.
+
+  Isso e proposital. Antes de ligar o envio real:
+    1. Mande o e-mail que esta em EMAIL-PONS.txt e pegue os enderecos
+       dos contratos na testnet
+    2. Rode um buyback completo na testnet com valor pequeno
+    3. So depois pense em mainnet
+
+
+ARQUIVOS QUE VALE ABRIR
+-----------------------
+  GO-LIVE.md       checklist do que falta antes de abrir para usuarios
+  EMAIL-PONS.txt   rascunho pronto para pedir os enderecos da testnet
+  README.md        visao geral do projeto (em ingles)
+  DEPLOY.md        como hospedar com endereco fixo (em ingles)
+  ARQUITETURA.md   o desenho completo e as decisoes (em portugues)
+
+
+A PASTA data/
+-------------
+  Criada na primeira execucao. Guarda o banco e os keystores dos agentes.
+  Se voce criar agentes com fundos de verdade, faca backup dela.
+  Perder a pasta data/keystores e perder os fundos dos agentes.

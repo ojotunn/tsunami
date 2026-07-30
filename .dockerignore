@@ -1,0 +1,26 @@
+# O que NUNCA pode entrar no contexto de build.
+#
+# Atencao ao .env: mesmo que o Dockerfile nao o copie para a imagem, tudo que
+# fica no contexto e ENVIADO para o servidor de build do provedor. O .env tem a
+# PONS_MASTER_KEY em texto puro — ela vai por variavel de ambiente no painel,
+# nunca por arquivo.
+.env
+.env.*
+!.env.example
+
+# Banco e keystores dos agentes. O volume do servidor comeca vazio, de proposito.
+data/
+
+node_modules/
+.git/
+*.log
+*.zip
+*.sqlite
+*.sqlite-wal
+*.sqlite-shm
+
+# Binarios e arquivos de Windows que nao servem no container
+*.exe
+*.bat
+COMO-RODAR.txt
+LINK-DO-SITE.txt

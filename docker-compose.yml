@@ -1,0 +1,40 @@
+# Deploy em VPS: Tsunami atrás do Caddy, que resolve HTTPS sozinho.
+#
+#   1. aponte o DNS do seu domínio para o IP da máquina
+#   2. edite PONS_DOMAIN e o e-mail no Caddyfile
+#   3. docker compose up -d
+services:
+  app:
+    build: .
+    restart: unless-stopped
+    environment:
+      # Trocar pelo seu domínio: aparece na mensagem que o usuário assina.
+      PONS_DOMAIN: ${PONS_DOMAIN:-tsunami.example.com}
+      # Cookie Secure + HSTS. Só ligue com HTTPS de verdade na frente.
+      PONS_SECURE_COOKIES: "1"
+      # Confia em X-Forwarded-For porque o Caddy está na frente.
+      PONS_TRUST_PROXY: "1"
+      # RPC própria é fortemente recomendada em produção.
+      PONS_RPC_URL: ${PONS_RPC_URL:-}
+    volumes:
+      - pons-data:/data
+    expose:
+      - "8787"
+
+  caddy:
+    image: caddy:2-alpine
+    restart: unless-stopped
+    ports:
+      - "80:80"
+      - "443:443"
+    volumes:
+      - ./Caddyfile:/etc/caddy/Caddyfile:ro
+      - caddy-data:/data
+      - caddy-config:/config
+    depends_on:
+      - app
+
+volumes:
+  pons-data:
+  caddy-data:
+  caddy-config:

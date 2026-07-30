@@ -1,0 +1,6 @@
+node_modules/
+data/
+*.log
+.env
+LINK-DO-SITE.txt
+cloudflared.exe

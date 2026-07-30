@@ -1,0 +1,45 @@
+Rascunho de e-mail para contact@ponsfamily.com
+Objetivo: descobrir os enderecos dos contratos da pons na testnet (chain 46630),
+para testar a execucao sem usar dinheiro real na mainnet.
+
+Copie o texto abaixo. Esta em ingles porque o suporte deles e em ingles.
+
+------------------------------------------------------------------------------
+Subject: Testnet contract addresses for integration testing
+
+Hi,
+
+I'm building an agent that automates buyback-and-burn and creator-reward
+collection for tokens launched on pons, and I'd like to test the full
+transaction path before touching mainnet.
+
+I have the mainnet deployments from your integration docs:
+
+  Factory     0xA5aAb3F0c6EeadF30Ef1D3Eb997108E976351feB
+  Locker      0x736D76699C26D0d966744cAe304C000d471f7F35
+  V3 Factory  0x1f7d7550B1b028f7571E69A784071F0205FD2EfA
+  WETH        0x0Bd7D308f8E1639FAb988df18A8011f41EAcAD73
+
+Two questions:
+
+1. Is the protocol deployed on Robinhood Chain testnet (chain 46630)? If so,
+   could you share the Factory, Locker, V3 Factory and WETH addresses there?
+
+2. On the Locker, is collectFees(token) callable by anyone, or only by the
+   deployer and addresses enabled through setFeeCollector? I'd like the agent
+   to trigger collection without ever holding the creator's private key, using
+   setFeeRedirect to point the payout at the agent wallet. I want to confirm
+   that's a supported pattern before I ship it.
+
+Thanks,
+------------------------------------------------------------------------------
+
+Depois que eles responderem, e so rodar com as variaveis:
+
+  set PONS_NETWORK=testnet
+  set PONS_FACTORY=0x...
+  set PONS_LOCKER=0x...
+  set PONS_WETH=0x...
+  set PONS_V3_FACTORY=0x...
+
+  node src\web\server.js

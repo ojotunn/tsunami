@@ -1,0 +1,18 @@
+{
+  "name": "tsunami",
+  "version": "0.2.0",
+  "type": "module",
+  "private": true,
+  "description": "Ferramenta de market making controlada por agentes de IA para tokens Pons (Robinhood Chain 4663)",
+  "engines": {
+    "node": ">=22.9"
+  },
+  "scripts": {
+    "test": "node --test test/*.test.js",
+    "web": "node --env-file-if-exists=.env src/web/server.js",
+    "start": "node --env-file-if-exists=.env src/web/server.js",
+    "pons": "node --env-file-if-exists=.env src/cli.js",
+    "build:demo": "node scripts/build-demo.mjs"
+  },
+  "dependencies": {}
+}
