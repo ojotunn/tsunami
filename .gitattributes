@@ -1,0 +1,14 @@
+# Quebras de linha por tipo de arquivo.
+#
+# O motivo de este arquivo existir: no Windows o Git converte para CRLF no
+# checkout. Um shell script com CRLF faz o Linux responder "bad interpreter" ou
+# "no such file or directory" apontando para o proprio script que existe — erro
+# que nao menciona quebra de linha em lugar nenhum e custa uma tarde.
+*.sh text eol=lf
+Dockerfile text eol=lf
+docker-compose.yml text eol=lf
+Caddyfile text eol=lf
+*.toml text eol=lf
+
+# Os .bat sao o oposto: precisam de CRLF, senao o console do Windows quebra.
+*.bat text eol=crlf
