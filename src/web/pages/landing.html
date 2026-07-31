@@ -5,44 +5,57 @@
 <meta name="viewport" content="width=device-width,initial-scale=1">
 <title>{{BRAND}} · agents for pons tokens</title>
 <meta name="description" content="Agents that run buyback and burn, creator reward collection, scheduled buys, and airdrops for pons tokens on Robinhood Chain.">
+<link rel="icon" href="/assets/brand-32.png" sizes="32x32">
+<link rel="apple-touch-icon" href="/assets/brand-180.png">
 <style>
   :root{
-    --bg:#0b0e13; --panel:#141920; --panel-2:#1a212a; --line:#252d38;
-    --tx:#e8eef5; --dim:#8b98a8; --accent:#5aa2ff; --ok:#3fb950;
-    --warn:#e3b341; --bad:#f85149;
+    /* O fundo e o mesmo preto do arquivo da marca (#000201). Isso importa: o
+       PNG tem fundo preto gravado, entao so nesse tom exato a moldura some e o
+       simbolo parece flutuar em vez de vir dentro de um quadrado. */
+    --bg:#000201; --panel:#0a0f16; --panel-2:#101821; --line:#1b2735;
+    --tx:#e9f2fa; --dim:#8b9cb0; --ok:#3fb950; --warn:#e3b341; --bad:#f85149;
+    /* Turquesa medido no proprio arquivo da marca, ao longo do degrade. */
+    --accent:#2ACCDF; --accent-hi:#20EBE3; --accent-lo:#134A95;
+    --grad:linear-gradient(135deg,#20EBE3,#1E6FB8);
   }
   *{box-sizing:border-box;margin:0;padding:0}
   body{background:var(--bg);color:var(--tx);
        font:16px/1.65 ui-sans-serif,-apple-system,"Segoe UI",Roboto,sans-serif;
-       -webkit-font-smoothing:antialiased}
+       -webkit-font-smoothing:antialiased;overflow-x:hidden}
   a{color:var(--accent);text-decoration:none}
   .wrap{max-width:1060px;margin:0 auto;padding:0 24px}
 
-  nav{border-bottom:1px solid var(--line);position:sticky;top:0;background:rgba(11,14,19,.9);
-      backdrop-filter:blur(8px);z-index:10}
-  nav .wrap{display:flex;align-items:center;gap:20px;height:62px}
-  .logo{font-weight:700;letter-spacing:-.02em;font-size:17px}
-  .logo span{color:var(--accent)}
+  nav{border-bottom:1px solid var(--line);position:sticky;top:0;
+      background:rgba(0,2,1,.86);backdrop-filter:blur(8px);z-index:10}
+  nav .wrap{display:flex;align-items:center;gap:18px;height:64px}
+  .brand{display:flex;align-items:center;gap:10px;font-weight:700;
+         letter-spacing:-.02em;font-size:17px}
+  .brand img{width:26px;height:26px;display:block}
+  .brand span{color:var(--accent)}
   nav .sp{flex:1}
-  .btn{background:var(--accent);color:#04101f;border:0;border-radius:8px;padding:10px 18px;
-       font:inherit;font-size:14px;font-weight:600;cursor:pointer;display:inline-block}
-  .btn.ghost{background:transparent;color:var(--tx);border:1px solid var(--line);font-weight:500}
+  .btn{background:var(--grad);color:#00171c;border:0;border-radius:8px;padding:10px 18px;
+       font:inherit;font-size:14px;font-weight:650;cursor:pointer;display:inline-block}
+  .btn.ghost{background:transparent;color:var(--accent);border:1px solid #2ACCDF55;
+             font-weight:550}
 
-  header{padding:88px 0 64px;border-bottom:1px solid var(--line)}
-  .badge{display:inline-block;font-size:12px;color:var(--dim);border:1px solid var(--line);
-         border-radius:999px;padding:5px 13px;margin-bottom:22px}
-  h1{font-size:clamp(32px,5.2vw,50px);line-height:1.1;letter-spacing:-.03em;
-     font-weight:700;max-width:17ch;margin-bottom:20px}
+  /* --- heroi editorial ---------------------------------------------------
+     A marca sangra pela direita em baixa opacidade e funciona como cenario, nao
+     como ilustracao. O texto ocupa a esquerda e nunca passa por cima dela. */
+  header{position:relative;padding:96px 0 78px;border-bottom:1px solid var(--line);
+         overflow:hidden}
+  .bleed{position:absolute;right:-90px;top:-40px;width:520px;height:520px;
+         opacity:.17;pointer-events:none;user-select:none}
+  header .wrap{position:relative;z-index:1}
+  .hero{max-width:62%}
+  .rule{width:44px;height:3px;background:var(--grad);border-radius:2px;margin-bottom:20px}
+  h1{font-size:clamp(46px,11vw,92px);line-height:1;letter-spacing:.02em;
+     font-weight:800;margin-bottom:18px}
   h1 em{font-style:normal;color:var(--accent)}
-  /* O titulo virou a marca, uma palavra so em maiusculas. Caixa alta pede
-     espacamento POSITIVO — o -.03em acima existe para frase longa em caixa
-     baixa e aqui deixaria as letras coladas. Sem palavra para quebrar,
-     tambem nao faz sentido manter o limite de 17ch. */
-  h1.wordmark{font-size:clamp(46px,11vw,92px);letter-spacing:.02em;max-width:none;
-    margin-bottom:18px}
-  .lead{font-size:18px;color:var(--dim);max-width:60ch;margin-bottom:30px}
+  .lead{font-size:18px;color:var(--dim);max-width:52ch;margin-bottom:28px}
   .cta{display:flex;gap:12px;flex-wrap:wrap;align-items:center}
   .cta small{color:var(--dim);font-size:13px}
+  .badge{display:inline-block;font-size:12px;color:var(--dim);border:1px solid var(--line);
+         border-radius:999px;padding:5px 13px;margin-bottom:24px}
 
   /* Contrato do token da instancia. So aparece quando PONS_SITE_TOKEN existe. */
   .token-badge{display:inline-flex;align-items:center;gap:10px;flex-wrap:wrap;
@@ -57,69 +70,78 @@
     text-decoration:none}
   .tb-btn:hover{color:var(--tx);border-color:var(--dim)}
 
-  section{padding:66px 0;border-bottom:1px solid var(--line)}
-  h2{font-size:26px;letter-spacing:-.02em;margin-bottom:10px;font-weight:650}
-  .sub{color:var(--dim);margin-bottom:32px;max-width:62ch}
+  /* --- secoes numeradas --------------------------------------------------- */
+  section{padding:72px 0;border-bottom:1px solid var(--line)}
+  .lbl{display:flex;align-items:baseline;gap:12px;margin-bottom:10px}
+  .num{font:700 13px/1 ui-monospace,SFMono-Regular,Menlo,monospace;color:var(--accent);
+       letter-spacing:.08em}
+  h2{font-size:26px;letter-spacing:-.02em;font-weight:650}
+  .sub{color:var(--dim);margin-bottom:34px;max-width:62ch}
 
-  .grid{display:grid;grid-template-columns:repeat(auto-fit,minmax(250px,1fr));gap:16px}
-  .card{background:var(--panel);border:1px solid var(--line);border-radius:12px;padding:22px}
+  .grid{display:grid;grid-template-columns:repeat(auto-fit,minmax(250px,1fr));gap:18px}
+  .card{border-left:2px solid var(--line);padding:2px 0 2px 18px;transition:border-color .18s}
+  .card:hover{border-left-color:var(--accent)}
   .card h3{font-size:16px;margin-bottom:8px;font-weight:620}
   .card p{color:var(--dim);font-size:14px}
-  .card .tag{display:inline-block;font-size:11px;color:var(--dim);background:var(--panel-2);
+  .card .tag{display:inline-block;font-size:11px;color:var(--dim);background:var(--panel);
              border:1px solid var(--line);border-radius:999px;padding:2px 9px;margin-top:12px}
 
-  .steps{counter-reset:s;display:grid;gap:14px}
-  .step{display:flex;gap:16px;background:var(--panel);border:1px solid var(--line);
-        border-radius:12px;padding:20px}
-  .step::before{counter-increment:s;content:counter(s);flex:0 0 30px;height:30px;
-    background:var(--panel-2);border:1px solid var(--line);border-radius:50%;
-    display:grid;place-items:center;font-size:13px;color:var(--accent);font-weight:600}
-  .step h3{font-size:15px;margin-bottom:4px}
+  .steps{counter-reset:s;display:grid;gap:20px;
+         grid-template-columns:repeat(auto-fit,minmax(230px,1fr))}
+  .step{border-top:1px solid var(--line);padding-top:16px}
+  .step::before{counter-increment:s;content:"0" counter(s);
+    font:700 12px/1 ui-monospace,SFMono-Regular,Menlo,monospace;color:var(--accent);
+    display:block;margin-bottom:9px;letter-spacing:.08em}
+  .step h3{font-size:15px;margin-bottom:5px}
   .step p{color:var(--dim);font-size:14px}
 
-  .note{border-left:3px solid var(--warn);background:#1a1408;border-radius:0 10px 10px 0;
-        padding:18px 22px;color:#e8cd8f;font-size:15px}
-  .note strong{color:#f4dfa8}
-  .note code{background:rgba(0,0,0,.35);padding:1px 6px;border-radius:4px;font-size:13px}
-
-  .no{border-left:3px solid var(--bad);background:#180f10;border-radius:0 10px 10px 0;
-      padding:18px 22px;color:#eda9a5;font-size:15px}
-  .no strong{color:#f5c2bf}
-
   table{width:100%;border-collapse:collapse;font-size:14px}
-  th,td{text-align:left;padding:11px 12px;border-bottom:1px solid var(--line)}
+  th,td{text-align:left;padding:12px 12px 12px 0;border-bottom:1px solid var(--line)}
   th{color:var(--dim);font-weight:500;font-size:12px;text-transform:uppercase;letter-spacing:.06em}
   td code{font-size:12px;color:var(--dim)}
 
-  footer{padding:44px 0;color:var(--dim);font-size:13px}
+  footer{padding:48px 0 64px;color:var(--dim);font-size:13px}
   footer p{max-width:70ch;margin-bottom:10px}
+
+  /* No celular a marca de fundo sai de cena: com o texto ocupando a largura
+     toda, ela passaria por tras das letras e atrapalharia a leitura. */
+  @media (max-width:760px){
+    .hero{max-width:100%}
+    .bleed{display:none}
+    header{padding:64px 0 56px}
+    section{padding:54px 0}
+  }
 </style>
 </head>
 <body>
 
 <nav><div class="wrap">
-  <div class="logo">{{BRAND_HTML}}</div>
+  <div class="brand"><img src="/assets/brand-64.png" alt="" width="26" height="26">{{BRAND_HTML}}</div>
   <a href="#features" style="color:var(--dim);font-size:14px">features</a>
   <div class="sp"></div>
   <a class="btn" href="/app">Open the app</a>
 </div></nav>
 
-<header><div class="wrap">
-  <div class="badge">Robinhood Chain · chain 4663 · built for pons launches</div>
-  <h1 class="wordmark">TSU<em>NAMI</em></h1>
-  <p class="lead">
-    Tsunami brings functions that exist on pump.fun to Robinhood Chain,
-    through automated AI agents.
-  </p>
-  <div class="cta">
-    <a class="btn" href="/app">Launch your agent</a>
-    <small>Sign in with your wallet. No password, no signup, no private key.</small>
-  </div>
-  {{TOKEN_BADGE}}
-</div></header>
+<header>
+  <img class="bleed" src="/assets/brand-512.png" alt="" width="520" height="520">
+  <div class="wrap"><div class="hero">
+    <div class="badge">Robinhood Chain · chain 4663 · built for pons launches</div>
+    <div class="rule"></div>
+    <h1>TSU<em>NAMI</em></h1>
+    <p class="lead">
+      Tsunami brings functions that exist on pump.fun to Robinhood Chain,
+      through automated AI agents.
+    </p>
+    <div class="cta">
+      <a class="btn" href="/app">Launch your agent</a>
+      <small>Sign in with your wallet. No password, no signup, no private key.</small>
+    </div>
+    {{TOKEN_BADGE}}
+  </div></div>
+</header>
 
 <section id="features"><div class="wrap">
-  <h2>Six ways to keep your chart honest</h2>
+  <div class="lbl"><span class="num">01</span><h2>Six ways to keep your chart honest</h2></div>
   <p class="sub">Turn on only what you need. Every function clears two checks before it becomes
      an action: the protocol's own limits, and the risk policy you set yourself.</p>
   <div class="grid">
@@ -163,35 +185,34 @@
 </div></section>
 
 <section><div class="wrap">
-  <h2>Running in under five minutes</h2>
+  <div class="lbl"><span class="num">02</span><h2>Running in under five minutes</h2></div>
   <p class="sub">Four steps. Not one of them asks for your private key.</p>
   <div class="steps">
-    <div class="step"><div>
+    <div class="step">
       <h3>Connect the wallet that launched your token</h3>
-      <p>You sign a plain text message to prove the address is yours. Signing a message
-         moves no funds and authorizes no transaction — and it is what unlocks the
-         creator rewards side.</p>
-    </div></div>
-    <div class="step"><div>
+      <p>You sign a plain text message to prove the address is yours. Signing moves no funds
+         and authorizes no transaction — and it is what unlocks the creator rewards side.</p>
+    </div>
+    <div class="step">
       <h3>Create the agent</h3>
       <p>You get a brand new, dedicated wallet on Robinhood Chain, encrypted with your own
          password. It can only ever move what you send to it — never your main wallet.</p>
-    </div></div>
-    <div class="step"><div>
+    </div>
+    <div class="step">
       <h3>Point the rewards, fund the rest</h3>
       <p>One signature redirects your creator payout to the agent. For the functions that
          buy, deposit only what you are willing to put to work — and withdraw it any time.</p>
-    </div></div>
-    <div class="step"><div>
+    </div>
+    <div class="step">
       <h3>Pick your functions and watch</h3>
       <p>Every proposal shows the reasoning, the price impact, and the verdict from both
          checks. On the default setting, nothing moves without your approval.</p>
-    </div></div>
+    </div>
   </div>
 </div></section>
 
 <section><div class="wrap">
-  <h2>Where the keys live</h2>
+  <div class="lbl"><span class="num">03</span><h2>Where the keys live</h2></div>
   <p class="sub">The model is deliberately split: each kind of access has the smallest
      blast radius we could give it.</p>
   <table>

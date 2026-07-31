@@ -4,10 +4,12 @@
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width,initial-scale=1">
 <title>{{BRAND}} · app</title>
+<link rel="icon" href="/assets/brand-32.png" sizes="32x32">
+<link rel="apple-touch-icon" href="/assets/brand-180.png">
 <style>
   :root{
     --bg:#0b0e13; --panel:#141920; --panel-2:#1a212a; --line:#252d38;
-    --tx:#e8eef5; --dim:#8b98a8; --accent:#5aa2ff; --ok:#3fb950;
+    --tx:#e8eef5; --dim:#8b98a8; --accent:#2ACCDF; --ok:#3fb950;
     --warn:#e3b341; --bad:#f85149;
   }
   *{box-sizing:border-box;margin:0;padding:0}
@@ -17,7 +19,9 @@
   nav{border-bottom:1px solid var(--line);height:60px;display:flex;align-items:center;
       gap:14px;padding:0 26px;position:sticky;top:0;background:rgba(11,14,19,.94);
       backdrop-filter:blur(8px);z-index:20}
-  .logo{font-weight:700;letter-spacing:-.02em;font-size:16px}
+  .logo{font-weight:700;letter-spacing:-.02em;font-size:16px;
+        display:flex;align-items:center;gap:9px}
+  .logo img{width:24px;height:24px;display:block}
   .logo span{color:var(--accent)}
   .sp{flex:1}
   .chip{font-size:12px;padding:4px 10px;border-radius:999px;background:var(--panel-2);
@@ -76,7 +80,7 @@
 <body>
 
 <nav>
-  <div class="logo"><a href="/" style="color:inherit">{{BRAND_HTML}}</a></div>
+  <div class="logo"><a href="/" style="color:inherit;display:flex;align-items:center;gap:9px"><img src="/assets/brand-64.png" alt="" width="24" height="24">{{BRAND_HTML}}</a></div>
   <span class="chip" id="chainChip">…</span>
   <div class="sp"></div>
   <span class="chip" id="walletChain" style="display:none"></span>

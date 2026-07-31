@@ -173,6 +173,21 @@ function tokenBadge() {
   </script>`;
 }
 
+/**
+ * Imagens da marca, servidas de `src/web/assets`.
+ *
+ * Carregadas na memoria no arranque, e nao lidas do disco a cada pedido: sao
+ * poucos arquivos, os maiores tem 140 kB, e assim o disco some do caminho
+ * quente. Sem essa rota nao ha como exibir o logo — a CSP do site bloqueia
+ * qualquer host externo, entao imagem hospedada fora simplesmente nao carrega.
+ */
+const ASSETS = new Map();
+for (const nome of ['brand-32.png', 'brand-64.png', 'brand-128.png', 'brand-180.png',
+  'brand-256.png', 'brand-512.png']) {
+  try { ASSETS.set(nome, readFileSync(join(HERE, 'assets', nome))); }
+  catch { /* asset ausente nao derruba o site */ }
+}
+
 const pageCache = new Map();
 const page = (name) => {
   if (!pageCache.has(name)) {
@@ -647,6 +662,28 @@ export function start({ port = Number(process.env.PORT || 8787), host = process.
     if (url.pathname === '/demo' || url.pathname === '/demo/') {
       res.writeHead(302, { location: '/app' });
       return res.end();
+    }
+
+    // Imagens da marca. O nome carrega o tamanho, entao o conteudo nunca muda
+    // para um mesmo caminho — daí o cache de um ano com `immutable`.
+    if (url.pathname.startsWith('/assets/')) {
+      const arquivo = url.pathname.slice('/assets/'.length);
+      const bytes = ASSETS.get(arquivo);
+      if (!bytes) { res.writeHead(404); return res.end('not found'); }
+      res.writeHead(200, {
+        'content-type': 'image/png',
+        'cache-control': 'public, max-age=31536000, immutable',
+        'content-length': bytes.length,
+      });
+      return res.end(bytes);
+    }
+
+    // Favicon: o navegador pede /favicon.ico sozinho, sem passar pelo HTML.
+    if (url.pathname === '/favicon.ico') {
+      const bytes = ASSETS.get('brand-32.png');
+      if (!bytes) { res.writeHead(404); return res.end(); }
+      res.writeHead(200, { 'content-type': 'image/png', 'cache-control': 'public, max-age=86400' });
+      return res.end(bytes);
     }
 
     if (PAGES[url.pathname]) {
