@@ -194,6 +194,19 @@ for (const nome of ['brand-32.png', 'brand-64.png', 'brand-128.png', 'brand-180.
   } catch { /* asset ausente nao derruba o site */ }
 }
 
+/**
+ * Versao das imagens, derivada do conteudo de todas elas juntas.
+ *
+ * As paginas pedem /assets/brand-64.png?v=<isto>. Sem esse sufixo, a troca de
+ * marca nao chega em quem visitou o site enquanto ele mandava guardar por um
+ * ano com `immutable` — esse cabecalho manda o navegador NAO revalidar, entao
+ * nem ETag nova adianta: ele simplesmente nao pergunta. Mudar a URL contorna
+ * isso, porque um endereco novo nao esta no cache de ninguem.
+ */
+const ASSETS_V = createHash('sha256')
+  .update([...ASSETS.values()].reduce((a, b) => Buffer.concat([a, b]), Buffer.alloc(0)))
+  .digest('hex').slice(0, 10);
+
 const pageCache = new Map();
 const page = (name) => {
   if (!pageCache.has(name)) {
@@ -202,7 +215,8 @@ const page = (name) => {
       .replaceAll('{{BRAND}}', escapeHtml(BRAND))
       .replaceAll('{{FEE_NOTICE}}', feeNotice())
       .replaceAll('{{FEE_NOTICE_BLOCK}}', feeNoticeBlock())
-      .replaceAll('{{TOKEN_BADGE}}', tokenBadge());
+      .replaceAll('{{TOKEN_BADGE}}', tokenBadge())
+      .replaceAll('{{ASSETS_V}}', ASSETS_V);
     pageCache.set(name, Buffer.from(html, 'utf8'));
   }
   return pageCache.get(name);

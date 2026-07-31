@@ -5,8 +5,8 @@
 <meta name="viewport" content="width=device-width,initial-scale=1">
 <title>{{BRAND}} · agents for pons tokens</title>
 <meta name="description" content="Agents that run buyback and burn, creator reward collection, scheduled buys, and airdrops for pons tokens on Robinhood Chain.">
-<link rel="icon" href="/assets/brand-32.png" sizes="32x32">
-<link rel="apple-touch-icon" href="/assets/brand-180.png">
+<link rel="icon" href="/assets/brand-32.png?v={{ASSETS_V}}" sizes="32x32">
+<link rel="apple-touch-icon" href="/assets/brand-180.png?v={{ASSETS_V}}">
 <style>
   :root{
     /* O fundo e o mesmo preto do arquivo da marca (#000100). Isso importa: o
@@ -51,7 +51,7 @@
      imagem de um <img> escondido. Sao 260 kB que o celular deixa de baixar
      para ver algo que nem aparece na tela dele. */
   .bleed{position:absolute;right:-90px;top:-40px;width:520px;height:520px;
-         background:url('/assets/brand-512.png') center/contain no-repeat;
+         background:url('/assets/brand-512.png?v={{ASSETS_V}}') center/contain no-repeat;
          opacity:.17;pointer-events:none;user-select:none}
   header .wrap{position:relative;z-index:1}
   .hero{max-width:62%}
@@ -117,7 +117,7 @@
 <body>
 
 <nav><div class="wrap">
-  <div class="brand"><img src="/assets/brand-64.png" alt="" width="26" height="26">{{BRAND_HTML}}</div>
+  <div class="brand"><img src="/assets/brand-64.png?v={{ASSETS_V}}" alt="" width="26" height="26">{{BRAND_HTML}}</div>
   <a href="#features" style="color:var(--dim);font-size:14px">features</a>
   <div class="sp"></div>
   <a class="btn" href="/app">Open the app</a>
