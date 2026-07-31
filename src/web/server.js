@@ -7,6 +7,7 @@
 //  - a carteira do agente, gerada aqui, guarda apenas o capital de operação.
 import { createServer } from 'node:http';
 import { readFileSync } from 'node:fs';
+import { createHash } from 'node:crypto';
 import { fileURLToPath, pathToFileURL } from 'node:url';
 import { dirname, join, resolve } from 'node:path';
 
@@ -181,10 +182,16 @@ function tokenBadge() {
  * qualquer host externo, entao imagem hospedada fora simplesmente nao carrega.
  */
 const ASSETS = new Map();
+const ASSET_ETAGS = new Map();
 for (const nome of ['brand-32.png', 'brand-64.png', 'brand-128.png', 'brand-180.png',
   'brand-256.png', 'brand-512.png']) {
-  try { ASSETS.set(nome, readFileSync(join(HERE, 'assets', nome))); }
-  catch { /* asset ausente nao derruba o site */ }
+  try {
+    const bytes = readFileSync(join(HERE, 'assets', nome));
+    ASSETS.set(nome, bytes);
+    // ETag derivada do conteudo: trocar a marca troca a etiqueta sozinho, sem
+    // ninguem precisar lembrar de mexer em versao nenhuma.
+    ASSET_ETAGS.set(nome, `"${createHash('sha256').update(bytes).digest('hex').slice(0, 16)}"`);
+  } catch { /* asset ausente nao derruba o site */ }
 }
 
 const pageCache = new Map();
@@ -661,15 +668,32 @@ export function start({ port = Number(process.env.PORT || 8787), host = process.
       return res.end();
     }
 
-    // Imagens da marca. O nome carrega o tamanho, entao o conteudo nunca muda
-    // para um mesmo caminho — daí o cache de um ano com `immutable`.
+    // Imagens da marca.
+    //
+    // Este bloco ja teve cache de um ano com `immutable`, e o comentario dizia
+    // que o conteudo nunca mudava porque o nome carrega o tamanho. Estava
+    // errado: o nome carrega o TAMANHO, nao o conteudo. Numa troca de marca o
+    // brand-64.png continua se chamando brand-64.png com um desenho diferente —
+    // e quem ja tinha visitado o site ficaria com o logo antigo por um ano, sem
+    // nenhuma forma de forcar a atualizacao a nao ser limpar o cache na mao.
+    //
+    // Agora vai ETag: o navegador guarda por uma hora e depois pergunta "mudou?".
+    // Se nao mudou, a resposta e um 304 de alguns bytes. Se mudou, ele pega o
+    // arquivo novo no mesmo dia — nao no ano que vem.
     if (url.pathname.startsWith('/assets/')) {
       const arquivo = url.pathname.slice('/assets/'.length);
       const bytes = ASSETS.get(arquivo);
       if (!bytes) { res.writeHead(404); return res.end('not found'); }
+
+      const etag = ASSET_ETAGS.get(arquivo);
+      if (req.headers['if-none-match'] === etag) {
+        res.writeHead(304, { etag, 'cache-control': 'public, max-age=3600' });
+        return res.end();
+      }
       res.writeHead(200, {
         'content-type': 'image/png',
-        'cache-control': 'public, max-age=31536000, immutable',
+        'cache-control': 'public, max-age=3600',
+        etag,
         'content-length': bytes.length,
       });
       return res.end(bytes);
