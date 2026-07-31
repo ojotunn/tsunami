@@ -154,12 +154,24 @@
     <div class="card">
       <h2>Functions</h2>
       <div id="functions"><div class="empty">loading…</div></div>
-      <button id="runBtn" disabled style="margin-top:6px">Run agent (simulation)</button>
+      <button id="runBtn" disabled style="margin-top:6px">Run agent</button>
+
+      <!-- Caminho direto: roda e envia. So aparece quando o servidor permite
+           envio real; sem isso o botao prometeria algo que nao acontece. -->
+      <div id="runLive" style="display:none;margin-top:16px;padding-top:14px;
+                               border-top:1px solid var(--line)">
+        <label>Keystore password (used only to sign, never stored)</label>
+        <input type="password" id="livePw" placeholder="agent password" autocomplete="off">
+        <button id="runLiveBtn" disabled style="margin-top:8px">Run and send for real</button>
+        <div class="note warn" style="margin-top:8px">Sends every decision your policy
+          approves, without stopping for review one by one. Your risk policy, the protocol
+          limits and the on-chain check before each transaction all still apply.</div>
+      </div>
     </div>
 
     <div class="card">
       <h2>Results</h2>
-      <div id="result"><div class="empty">Pick an agent, turn on some functions, and run the simulation.</div></div>
+      <div id="result"><div class="empty">Pick an agent, turn on some functions, and run it.</div></div>
     </div>
   </div>
 </main>
@@ -269,6 +281,7 @@ async function loadAgents(preferId = null) {
   if (agents.length === 0) {
     AGENT = null;
     $('runBtn').disabled = true;
+    $('runLiveBtn').disabled = true;
     $('agentInfo').innerHTML = `
       <div class="kv"><span>agents on this account</span><span>none yet</span></div>
       <p class="muted" style="margin:10px 0 0">
@@ -314,10 +327,15 @@ $('createBtn').onclick = async () => {
 $('agentSelect').onchange = (e) => selectAgent(e.target.value);
 
 async function selectAgent(id) {
-  if (!id) { AGENT = null; $('agentInfo').innerHTML = ''; $('runBtn').disabled = true; return; }
+  if (!id) {
+    AGENT = null; $('agentInfo').innerHTML = '';
+    $('runBtn').disabled = true; $('runLiveBtn').disabled = true;
+    return;
+  }
   AGENT = await api('GET', '/api/agents/' + id);
   try { sessionStorage.setItem('pons_agent', id); } catch { /* modo privado: sem memória, sem problema */ }
   $('runBtn').disabled = false;
+  $('runLiveBtn').disabled = false;
   // O token alvo é editável aqui. Antes só dava para escolher na criação, e
   // quem errasse o endereço tinha que criar outro agente — carteira nova, chave
   // nova, fundos para mover. Trocar um campo de texto não pode custar isso.
@@ -483,26 +501,101 @@ function renderBanners() {
       </div>`);
   }
   $('betaBanner').innerHTML = parts.join('');
+
+  // Sem envio real ligado no servidor, o botao direto prometeria algo que nao
+  // acontece — o pedido voltaria como ensaio e o usuario acharia que enviou.
+  $('runLive').style.display = CONFIG.liveExecution ? 'block' : 'none';
+}
+
+/** Grava o que está nos campos antes de rodar, senão o agente usa o salvo. */
+async function salvarFuncoes() {
+  for (const f of CONFIG.functions) {
+    const params = {};
+    for (const k of Object.keys(f.params)) {
+      const el = $(`p-${f.id}-${k}`);
+      if (el) params[k] = el.value;
+    }
+    await api('POST', `/api/agents/${AGENT.id}/functions`,
+      { functionId: f.id, enabled: $('on-'+f.id).checked, params });
+  }
 }
 
 $('runBtn').onclick = async () => {
   const b = $('runBtn');
   b.disabled = true; b.textContent = 'running…';
   try {
-    for (const f of CONFIG.functions) {
-      const params = {};
-      for (const k of Object.keys(f.params)) {
-        const el = $(`p-${f.id}-${k}`);
-        if (el) params[k] = el.value;
-      }
-      await api('POST', `/api/agents/${AGENT.id}/functions`,
-        { functionId: f.id, enabled: $('on-'+f.id).checked, params });
-    }
+    await salvarFuncoes();
     renderResult(await api('POST', `/api/agents/${AGENT.id}/run`, { persist: true }));
   } catch (e) {
     $('result').innerHTML = `<div class="note bad">${esc(e.message)}</div>`;
   }
-  b.disabled = false; b.textContent = 'Run agent (simulation)';
+  b.disabled = false; b.textContent = 'Run agent';
+};
+
+// ------------------------------------------------- rodar e enviar de uma vez
+//
+// Faz o caminho inteiro sem parar decisão por decisão: roda, aprova o que a
+// política liberou e envia. O que NÃO muda por causa deste botão, e é o que o
+// torna aceitável: cada decisão continua passando pela política de risco e
+// pelos limites do protocolo no servidor, e cada transação continua passando
+// por eth_call antes de ser assinada. Aqui se pula a revisão humana, não as
+// verificações.
+//
+// Decisão com qualquer violação fica de fora — o botão não tem poder de
+// atropelar o que a política recusou.
+$('runLiveBtn').onclick = async () => {
+  const senha = $('livePw').value;
+  if (!senha) return alert('enter the agent keystore password');
+
+  const b = $('runLiveBtn');
+  b.disabled = true; b.textContent = 'running…';
+  try {
+    await salvarFuncoes();
+    const out = await api('POST', `/api/agents/${AGENT.id}/run`, { persist: true });
+    renderResult(out);
+
+    const aprovaveis = (out.results || [])
+      .flatMap((r) => r.decisions || [])
+      .filter((d) => d.id && d.verdict && d.verdict.violations.length === 0);
+
+    if (!aprovaveis.length) {
+      $('result').insertAdjacentHTML('afterbegin',
+        '<div class="note">Nothing to send: no decision passed your policy this round.</div>');
+      return;
+    }
+
+    // Soma o que vai sair da carteira: o que entra no mercado mais a taxa.
+    const totalWei = aprovaveis.reduce((s, d) =>
+      s + BigInt(d.decision.notionalWei || 0) + BigInt(d.decision.feeWei || 0), 0n);
+    if (!confirm(`Send ${aprovaveis.length} decision(s) for real now, spending up to `
+      + `${eth(totalWei.toString())} ETH from the agent wallet? This cannot be undone.`)) {
+      return;
+    }
+
+    for (const d of aprovaveis) {
+      const alvo = $('exec-' + d.id);
+      if (alvo) alvo.insertAdjacentHTML('beforeend', `<div class="note" id="run-${d.id}">sending…</div>`);
+      try {
+        if (d.verdict.needsApproval) await api('POST', `/api/decisions/${d.id}/approve`);
+        const r = await api('POST', `/api/decisions/${d.id}/execute`, { password: senha, live: true });
+        if ($('run-' + d.id)) {
+          $('run-' + d.id).outerHTML = `<div class="note ok">Executed ${r.steps.length} step(s)</div>` +
+            r.steps.map((s) => `<div class="note${s.failed ? ' bad' : ''}">${esc(s.label)}${
+              s.failed ? ' — did not go through: ' + esc(s.failed)
+              : s.skipped ? ' — ' + esc(s.skipped)
+              : s.hash ? ' — <span class="mono">' + esc(s.hash.slice(0, 18)) + '…</span>' : ''}</div>`).join('');
+        }
+      } catch (e) {
+        // Uma decisão que falha não interrompe as outras: elas são independentes
+        // e parar aqui deixaria metade do plano sem explicação na tela.
+        if ($('run-' + d.id)) $('run-' + d.id).outerHTML = `<div class="note bad">${esc(e.message)}</div>`;
+      }
+    }
+    $('livePw').value = '';
+  } catch (e) {
+    $('result').innerHTML = `<div class="note bad">${esc(e.message)}</div>`;
+  }
+  b.disabled = false; b.textContent = 'Run and send for real';
 };
 
 // Taxa de serviço na tela da decisão. Na coleta de rewards o número é
