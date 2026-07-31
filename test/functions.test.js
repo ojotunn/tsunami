@@ -301,22 +301,29 @@ test('airdrop recusa lista que aponta para carteiras da própria ferramenta', as
   db.close();
 });
 
-test('airdrop divide em lotes e respeita o modo simulação', async () => {
+// O airdrop tinha um parametro "Simulate only" ligado por padrao, que fazia a
+// funcao nao propor nada. O efeito na tela era pessimo: ligar o airdrop, mandar
+// rodar e nao acontecer nada, sem motivo visivel. Agora ela sempre propoe, e
+// quem decide se algo sai e a politica de risco mais o envio de verdade.
+test('airdrop sempre propõe e divide em lotes', async () => {
   const { db, agent } = seed();
   const csv = Array.from({ length: 120 }, (_, i) =>
     `0x${String(i + 1).padStart(40, '0')},10`).join('\n');
 
-  const dry = await FUNCTIONS.airdrop.plan(baseCtx(db, agent), normalizeParams('airdrop', { recipientsCsv: csv, dryRun: true }));
-  assert.equal(dry.decisions.length, 0);
-  assert.equal(dry.preview.recipients, 120);
-  assert.ok(dry.notes.some((n) => /simulate only/.test(n)));
-
-  const live = await FUNCTIONS.airdrop.plan(baseCtx(db, agent), normalizeParams('airdrop', {
-    recipientsCsv: csv, dryRun: false, batchSize: 50,
+  const out = await FUNCTIONS.airdrop.plan(baseCtx(db, agent), normalizeParams('airdrop', {
+    recipientsCsv: csv, batchSize: 50,
   }));
-  assert.equal(live.decisions.length, 3);            // 50 + 50 + 20
-  assert.equal(live.decisions[0].steps.length, 50);
-  assert.equal(live.decisions[2].steps.length, 20);
+  assert.equal(out.decisions.length, 3);            // 50 + 50 + 20
+  assert.equal(out.decisions[0].steps.length, 50);
+  assert.equal(out.decisions[2].steps.length, 20);
+  assert.equal(out.preview.recipients, 120);
+
+  // O parametro sumiu do spec: mandar dryRun agora e ignorado, nao volta a
+  // esconder as decisoes.
+  const comLixo = await FUNCTIONS.airdrop.plan(baseCtx(db, agent), normalizeParams('airdrop', {
+    recipientsCsv: csv, batchSize: 50, dryRun: true,
+  }));
+  assert.equal(comLixo.decisions.length, 3, 'dryRun nao pode mais silenciar a funcao');
   db.close();
 });
 

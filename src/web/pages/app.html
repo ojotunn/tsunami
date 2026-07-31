@@ -192,11 +192,9 @@
         </div>
 
         <button id="runBtn" disabled>Start agent</button>
-        <button class="linky" id="dryBtn" disabled onclick="startAgent(false)">preview without sending</button>
 
-        <div class="warnline">Runs the agent and sends every decision your policy approves,
-          without stopping for review one by one. Your risk policy, the protocol limits and
-          the on-chain check before each transaction all still apply.</div>
+        <div class="warnline">Sends every decision your policy approves. Anything your
+          policy blocks is never sent.</div>
       </div>
     </div>
 
@@ -312,7 +310,6 @@ async function loadAgents(preferId = null) {
   if (agents.length === 0) {
     AGENT = null;
     $('runBtn').disabled = true;
-    $('dryBtn').disabled = true;
     $('agentInfo').innerHTML = `
       <div class="kv"><span>agents on this account</span><span>none yet</span></div>
       <p class="muted" style="margin:10px 0 0">
@@ -360,14 +357,13 @@ $('agentSelect').onchange = (e) => selectAgent(e.target.value);
 async function selectAgent(id) {
   if (!id) {
     AGENT = null; $('agentInfo').innerHTML = '';
-    $('runBtn').disabled = true; $('dryBtn').disabled = true;
+    $('runBtn').disabled = true;
     renderRunState();
     return;
   }
   AGENT = await api('GET', '/api/agents/' + id);
   try { sessionStorage.setItem('pons_agent', id); } catch { /* modo privado: sem memória, sem problema */ }
   $('runBtn').disabled = false;
-  $('dryBtn').disabled = false;
   renderRunState();
   // O token alvo é editável aqui. Antes só dava para escolher na criação, e
   // quem errasse o endereço tinha que criar outro agente — carteira nova, chave
@@ -512,7 +508,7 @@ function renderBanners() {
     parts.push(`<div class="banner" style="background:#181410;border-color:#5c4423;color:#edd0a5">
       <strong>The terms of use changed.</strong> Please
       <a href="/terms" target="_blank" rel="noopener">read them</a> and accept again —
-      sending transactions is on hold until you do. Reading your agents, simulating and
+      sending transactions is on hold until you do. Reading your agents and
       withdrawing are not affected.
       <button class="ghost sm" style="margin-left:8px" onclick="reaccept()">I accept the updated terms</button></div>`);
   }
@@ -538,10 +534,7 @@ function renderBanners() {
   // Sem envio real ligado no servidor o botão principal viraria promessa vazia:
   // o pedido voltaria como ensaio e a pessoa acharia que enviou. Aqui ele
   // assume o texto do que de fato acontece.
-  if (!CONFIG.liveExecution) {
-    $('runBtn').textContent = 'Run agent (nothing is sent)';
-    $('dryBtn').style.display = 'none';
-  }
+  if (!CONFIG.liveExecution) $('runBtn').textContent = 'Run agent (nothing is sent)';
   renderRunState();
 }
 
@@ -599,23 +592,18 @@ function renderRunState() {
   }
 }
 
-window.startAgent = async (live = true) => {
-  const b = live ? $('runBtn') : $('dryBtn');
+window.startAgent = async () => {
+  const b = $('runBtn');
   const rotulo = b.textContent;
 
-  // O preview não envia nada, então não precisa de senha nenhuma.
-  let senha = null;
-  if (live) {
-    senha = senhaDaAba(AGENT.id) || $('livePw').value;
-    if (!senha) { $('livePw').focus(); return alert('enter the agent keystore password once to start it'); }
-  }
+  const senha = senhaDaAba(AGENT.id) || $('livePw').value;
+  if (!senha) { $('livePw').focus(); return alert('enter the agent keystore password once to start it'); }
 
-  b.disabled = true; b.textContent = live ? 'starting…' : 'reading…';
+  b.disabled = true; b.textContent = 'starting…';
   try {
     await salvarFuncoes();
     const out = await api('POST', `/api/agents/${AGENT.id}/run`, { persist: true });
     renderResult(out);
-    if (!live) return;
 
     const aprovaveis = (out.results || [])
       .flatMap((r) => r.decisions || [])
@@ -659,7 +647,7 @@ window.startAgent = async (live = true) => {
   b.disabled = false; b.textContent = rotulo;
 };
 
-$('runBtn').onclick = () => startAgent(true);
+$('runBtn').onclick = () => startAgent();
 
 
 // Taxa de serviço na tela da decisão. Na coleta de rewards o número é
@@ -720,15 +708,17 @@ function renderResult(out) {
 window.approve = async (id) => {
   await api('POST', `/api/decisions/${id}/approve`);
   const slot = $('exec-' + id);
+  // Uma acao so aqui tambem: aprovar e mandar. O botao de simular saiu — quem
+  // quiser ver antes de gastar tem o resultado da rodada logo acima, com o
+  // notional, o impacto no preco e a taxa de cada decisao.
   slot.innerHTML = `
     <div class="note ok" style="margin-top:10px">Approved and recorded.</div>
-    <label>Keystore password (used only to sign, never stored)</label>
-    <input type="password" id="pw-${id}" placeholder="agent password">
-    <button class="ghost sm" style="margin-top:8px" onclick="execute(${id}, false)">Simulate</button>
     ${CONFIG.liveExecution
-      ? `<button class="sm" style="margin-top:8px;margin-left:6px" onclick="execute(${id}, true)">Send for real</button>`
-      : `<div class="note warn">Live sending is off on this server. Start it with
-           <code>PONS_ALLOW_LIVE_EXECUTION=1</code> once you have tested on testnet.</div>`}`;
+      ? `<label>Keystore password</label>
+         <input type="password" id="pw-${id}" placeholder="agent password">
+         <button class="sm" style="margin-top:8px" onclick="execute(${id}, true)">Send</button>`
+      : `<div class="note warn">Sending is off on this server. Turn it on with
+           <code>PONS_ALLOW_LIVE_EXECUTION=1</code>.</div>`}`;
 };
 
 window.execute = async (id, live) => {

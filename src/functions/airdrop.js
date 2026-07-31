@@ -19,7 +19,6 @@ export const spec = {
   params: {
     recipientsCsv: { type: 'text', default: '', label: 'List: address,amount per line' },
     batchSize: { type: 'int', default: 50, label: 'Transfers per batch' },
-    dryRun: { type: 'bool', default: true, label: 'Simulate only' },
   },
 };
 
@@ -90,10 +89,14 @@ export async function plan(ctx, params) {
     batches.push(recipients.slice(i, i + params.batchSize));
   }
   notes.push(`${recipients.length} recipients, ${formatUnits(total, decimals, 4)} tokens, ${batches.length} batch(es)`);
-  if (params.dryRun) notes.push('simulate only: no transfer will be sent');
 
+  // A funcao sempre propoe. Ela tinha um parametro "Simulate only" ligado por
+  // padrao, e o efeito era confuso: a pessoa ligava o airdrop, mandava rodar e
+  // nao acontecia nada, sem motivo visivel na tela. O que decide se algo sai e
+  // a politica de risco e o envio de verdade — nao um interruptor escondido
+  // dentro da funcao.
   return {
-    decisions: params.dryRun ? [] : batches.map((batch, i) => ({
+    decisions: batches.map((batch, i) => ({
       kind: 'airdrop',
       token,
       notionalWei: '0',

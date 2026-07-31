@@ -27,7 +27,6 @@ export const spec = {
     maxHolders: { type: 'int', default: 200, label: 'Max holders per run (largest first)' },
     excludeAddresses: { type: 'text', default: '', label: 'Extra addresses to exclude, one per line' },
     batchSize: { type: 'int', default: 50, label: 'Transfers per batch' },
-    dryRun: { type: 'bool', default: true, label: 'Simulate only' },
   },
 };
 
@@ -166,11 +165,8 @@ export async function plan(ctx, params) {
     if (over.length) notes.push(`${over.length} payouts exceed maxWallet and would revert — lower the total or raise the holder count`);
   }
 
-  if (params.dryRun) {
-    notes.push('simulate only: no transfer will be sent');
-    return { decisions: [], notes, preview: { holders: payouts.length, total: total.toString() } };
-  }
-
+  // Sempre propoe — ver a mesma nota em airdrop.js sobre o parametro
+  // "Simulate only" que existia aqui e so servia para nada acontecer.
   const batches = [];
   for (let i = 0; i < payouts.length; i += params.batchSize) batches.push(payouts.slice(i, i + params.batchSize));
 
