@@ -127,6 +127,56 @@ test('buyback propõe compra seguida de transferência para a queima', async () 
   db.close();
 });
 
+// As duas opções abaixo existiam só dentro do rewards_boost, que exige a
+// carteira que lançou o token. Aqui não exigem nada — comprar no pool não pede
+// permissão de ninguém —, então quem opera o token de outra pessoa alcança o
+// mesmo comportamento.
+
+test('esperar a graduação segura a compra até o token migrar', async () => {
+  const { db, agent } = seed();
+  const params = normalizeParams('buyback_burn', { amountEth: '0.005', afterGraduation: true });
+
+  const antes = await planBuyback(baseCtx(db, agent), params);
+  assert.equal(antes.decisions.length, 0);
+  assert.match(antes.notes[0], /waiting for graduation/);
+
+  const depois = await planBuyback(
+    baseCtx(db, agent, { state: { ...baseCtx(db, agent).state, graduated: true } }), params);
+  assert.equal(depois.decisions.length, 1, 'depois da graduação a compra sai');
+  db.close();
+});
+
+test('gastar tudo deixa a reserva de gás de fora', async () => {
+  const { db, agent } = seed();
+  const ctx = baseCtx(db, agent, { balances: { eth: parseUnits('1', 18), weth: 0n, token: 0n } });
+  const out = await planBuyback(ctx, normalizeParams('buyback_burn', { useFullBalance: true }));
+
+  const reserva = BigInt(agent.policy.reserveGasWei);
+  assert.equal(out.decisions.length, 1);
+  // Sem taxa configurada nos testes, sobra exatamente a reserva.
+  assert.equal(BigInt(out.decisions[0].notionalWei), parseUnits('1', 18) - reserva);
+  assert.ok(out.notes.some((n) => /spending the whole balance/.test(n)));
+  db.close();
+});
+
+test('gastar tudo avisa quando o valor estoura o limite por operação', async () => {
+  const { db, agent } = seed();
+  const out = await planBuyback(baseCtx(db, agent), normalizeParams('buyback_burn', { useFullBalance: true }));
+  // 1 ETH menos a reserva passa MUITO do teto padrão de 0.01 por operação.
+  assert.ok(out.notes.some((n) => /above your per-trade limit/.test(n)),
+    'sem esse aviso a política bloquearia e ninguém saberia por quê');
+  db.close();
+});
+
+test('gastar tudo não propõe nada quando a reserva já toma o saldo', async () => {
+  const { db, agent } = seed();
+  const ctx = baseCtx(db, agent, { balances: { eth: parseUnits('0.001', 18), weth: 0n, token: 0n } });
+  const out = await planBuyback(ctx, normalizeParams('buyback_burn', { useFullBalance: true }));
+  assert.equal(out.decisions.length, 0);
+  assert.match(out.notes[0], /gas reserve already takes the whole balance/);
+  db.close();
+});
+
 test('buyback recusa quando falta saldo', async () => {
   const { db, agent } = seed();
   const ctx = baseCtx(db, agent, { balances: { eth: parseUnits('0.001', 18), weth: 0n, token: 0n } });
