@@ -93,11 +93,6 @@
   .step h3{font-size:15px;margin-bottom:5px}
   .step p{color:var(--dim);font-size:14px}
 
-  table{width:100%;border-collapse:collapse;font-size:14px}
-  th,td{text-align:left;padding:12px 12px 12px 0;border-bottom:1px solid var(--line)}
-  th{color:var(--dim);font-weight:500;font-size:12px;text-transform:uppercase;letter-spacing:.06em}
-  td code{font-size:12px;color:var(--dim)}
-
   footer{padding:48px 0 64px;color:var(--dim);font-size:13px}
   footer p{max-width:70ch;margin-bottom:10px}
 
@@ -206,34 +201,6 @@
          checks. On the default setting, nothing moves without your approval.</p>
     </div>
   </div>
-</div></section>
-
-<section><div class="wrap">
-  <div class="lbl"><span class="num">03</span><h2>Where the keys live</h2></div>
-  <p class="sub">The model is deliberately split: each kind of access has the smallest
-     blast radius we could give it.</p>
-  <table>
-    <tr><th>What</th><th>Who holds it</th><th>Worst case if leaked</th></tr>
-    <tr>
-      <td>Your main wallet</td>
-      <td>You, always</td>
-      <td>Nothing — the site never has access to it</td>
-    </tr>
-    <tr>
-      <td>Creator reward payout</td>
-      <td>Redirected via <code>setFeeRedirect</code></td>
-      <td>You revert it by signing again, any time</td>
-    </tr>
-    <tr>
-      <td>Operating capital</td>
-      <td>Agent wallet, encrypted keystore</td>
-      <td>Loss capped at what you deposited</td>
-    </tr>
-  </table>
-  <p style="margin-top:22px;color:var(--dim);font-size:14px">
-    That's why there's no field to paste a private key. In that model a leak costs you
-    the entire wallet — tokens, NFTs, everything — instead of the operating deposit.
-  </p>
 </div></section>
 
 <footer><div class="wrap">
