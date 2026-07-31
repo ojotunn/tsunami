@@ -9,14 +9,15 @@
 <link rel="apple-touch-icon" href="/assets/brand-180.png">
 <style>
   :root{
-    /* O fundo e o mesmo preto do arquivo da marca (#000201). Isso importa: o
+    /* O fundo e o mesmo preto do arquivo da marca (#000100). Isso importa: o
        PNG tem fundo preto gravado, entao so nesse tom exato a moldura some e o
        simbolo parece flutuar em vez de vir dentro de um quadrado. */
-    --bg:#000201; --panel:#0a0f16; --panel-2:#101821; --line:#1b2735;
+    --bg:#000100; --panel:#0a0f16; --panel-2:#101821; --line:#1b2735;
     --tx:#e9f2fa; --dim:#8b9cb0; --ok:#3fb950; --warn:#e3b341; --bad:#f85149;
-    /* Turquesa medido no proprio arquivo da marca, ao longo do degrade. */
-    --accent:#2ACCDF; --accent-hi:#20EBE3; --accent-lo:#134A95;
-    --grad:linear-gradient(135deg,#20EBE3,#1E6FB8);
+    /* Ciano medido no proprio arquivo da marca, ao longo do degrade: o brilho
+       das pontas das setas, o tom dominante do corpo, e o azul do fundo delas. */
+    --accent:#5FC9E2; --accent-hi:#86F1FD; --accent-lo:#2E86B4;
+    --grad:linear-gradient(135deg,#86F1FD,#2E86B4);
   }
   *{box-sizing:border-box;margin:0;padding:0}
   body{background:var(--bg);color:var(--tx);
@@ -35,15 +36,22 @@
   nav .sp{flex:1}
   .btn{background:var(--grad);color:#00171c;border:0;border-radius:8px;padding:10px 18px;
        font:inherit;font-size:14px;font-weight:650;cursor:pointer;display:inline-block}
-  .btn.ghost{background:transparent;color:var(--accent);border:1px solid #2ACCDF55;
-             font-weight:550}
+  /* color-mix em vez de hex com alfa: assim o contorno acompanha a variavel e
+     nao volta a ficar preso na cor de uma marca antiga. */
+  .btn.ghost{background:transparent;color:var(--accent);font-weight:550;
+             border:1px solid color-mix(in srgb, var(--accent) 34%, transparent)}
 
   /* --- heroi editorial ---------------------------------------------------
      A marca sangra pela direita em baixa opacidade e funciona como cenario, nao
      como ilustracao. O texto ocupa a esquerda e nunca passa por cima dela. */
   header{position:relative;padding:96px 0 78px;border-bottom:1px solid var(--line);
          overflow:hidden}
+  /* Fundo em CSS e nao <img> de proposito: no celular esta marca some, e o
+     navegador NAO busca background de elemento com display:none — mas busca a
+     imagem de um <img> escondido. Sao 260 kB que o celular deixa de baixar
+     para ver algo que nem aparece na tela dele. */
   .bleed{position:absolute;right:-90px;top:-40px;width:520px;height:520px;
+         background:url('/assets/brand-512.png') center/contain no-repeat;
          opacity:.17;pointer-events:none;user-select:none}
   header .wrap{position:relative;z-index:1}
   .hero{max-width:62%}
@@ -116,7 +124,7 @@
 </div></nav>
 
 <header>
-  <img class="bleed" src="/assets/brand-512.png" alt="" width="520" height="520">
+  <div class="bleed" aria-hidden="true"></div>
   <div class="wrap"><div class="hero">
     <div class="rule"></div>
     <h1>BLIZZARD</h1>

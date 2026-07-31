@@ -9,8 +9,10 @@
 <style>
   :root{
     --bg:#0b0e13; --panel:#141920; --panel-2:#1a212a; --line:#252d38;
-    --tx:#e8eef5; --dim:#8b98a8; --accent:#2ACCDF; --ok:#3fb950;
+    --tx:#e8eef5; --dim:#8b98a8; --accent:#5FC9E2; --ok:#3fb950;
     --warn:#e3b341; --bad:#f85149;
+    /* Extremos do degrade da marca, medidos no proprio arquivo. */
+    --accent-hi:#86F1FD; --accent-lo:#2E86B4;
   }
   *{box-sizing:border-box;margin:0;padding:0}
   body{background:var(--bg);color:var(--tx);
@@ -39,9 +41,9 @@
      link de texto, para nada competir com o botao que gasta dinheiro. */
   .runbar{margin-top:4px}
   .runbar .rule{height:2px;width:38px;border-radius:2px;margin:18px 0 14px;
-    background:linear-gradient(90deg,var(--accent-hi,#20EBE3),#1E6FB8)}
-  .runbar #runBtn{background:linear-gradient(135deg,#20EBE3,#1E6FB8);color:#00171c;
-    font-size:13.5px;padding:10px 20px}
+    background:linear-gradient(90deg,var(--accent-hi),var(--accent-lo))}
+  .runbar #runBtn{background:linear-gradient(135deg,var(--accent-hi),var(--accent-lo));
+    color:#00171c;font-size:13.5px;padding:10px 20px}
   .cap{font-size:11px;letter-spacing:.08em;text-transform:uppercase;color:var(--dim);
     margin-bottom:7px}
   .linky{background:none;border:0;padding:0;margin-left:14px;color:var(--dim);
