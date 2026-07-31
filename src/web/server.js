@@ -616,19 +616,23 @@ const PAGES = {
   '/terms/': 'terms.html',
 };
 
-// O demo é gerado por `npm run build:demo`; se não existir, /demo cai no app.
-let demoPage = null;
-try {
-  demoPage = Buffer.from(
-    readFileSync(join(HERE, 'pages', 'demo.html'), 'utf8')
-      .replaceAll('{{BRAND_HTML}}', brandHtml())
-      .replaceAll('{{BRAND}}', escapeHtml(BRAND))
-      .replaceAll('{{FEE_NOTICE}}', feeNotice())
-      .replaceAll('{{FEE_NOTICE_BLOCK}}', feeNoticeBlock())
-      .replaceAll('{{TOKEN_BADGE}}', tokenBadge()),
-    'utf8',
-  );
-} catch { /* opcional */ }
+// O demo saiu do site. A pagina e o gerador continuam no repositorio
+// (src/web/pages/demo.html e scripts/build-demo.mjs), mas nao sao mais
+// servidos: nem link na landing, nem rota. Para religar, basta descomentar o
+// bloco abaixo e a rota correspondente em start(), e recolocar os dois links.
+//
+// let demoPage = null;
+// try {
+//   demoPage = Buffer.from(
+//     readFileSync(join(HERE, 'pages', 'demo.html'), 'utf8')
+//       .replaceAll('{{BRAND_HTML}}', brandHtml())
+//       .replaceAll('{{BRAND}}', escapeHtml(BRAND))
+//       .replaceAll('{{FEE_NOTICE}}', feeNotice())
+//       .replaceAll('{{FEE_NOTICE_BLOCK}}', feeNoticeBlock())
+//       .replaceAll('{{TOKEN_BADGE}}', tokenBadge()),
+//     'utf8',
+//   );
+// } catch { /* opcional */ }
 
 export function start({ port = Number(process.env.PORT || 8787), host = process.env.HOST || '127.0.0.1' } = {}) {
   const server = createServer(async (req, res) => {
@@ -639,9 +643,10 @@ export function start({ port = Number(process.env.PORT || 8787), host = process.
       return res.end('ok');
     }
 
-    if (url.pathname === '/demo' && demoPage) {
-      res.writeHead(200, { 'content-type': 'text/html; charset=utf-8', ...SECURITY_HEADERS });
-      return res.end(demoPage);
+    // /demo foi removido do site; quem chegar por link antigo vai para o app.
+    if (url.pathname === '/demo' || url.pathname === '/demo/') {
+      res.writeHead(302, { location: '/app' });
+      return res.end();
     }
 
     if (PAGES[url.pathname]) {

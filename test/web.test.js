@@ -331,11 +331,19 @@ test('/healthz responde sem autenticação', async () => {
   assert.equal(await res.text(), 'ok');
 });
 
-test('/demo é servido quando o build existe', async () => {
-  const res = await fetch(base + '/demo');
-  assert.equal(res.status, 200);
-  const html = await res.text();
-  assert.ok(html.includes('interactive demo'), 'a página /demo deveria ser o demo gerado');
+// O demo saiu do site. Quem chegar por link antigo — post, print, favorito —
+// nao pode ver 404: vai para o app, que e o lugar util agora.
+test('/demo redireciona para o app em vez de 404', async () => {
+  for (const caminho of ['/demo', '/demo/']) {
+    const res = await fetch(base + caminho, { redirect: 'manual' });
+    assert.equal(res.status, 302, `${caminho} deveria redirecionar`);
+    assert.equal(res.headers.get('location'), '/app');
+  }
+});
+
+test('a landing nao oferece mais o demo', async () => {
+  const html = await (await fetch(base + '/')).text();
+  assert.ok(!html.includes('/demo'), 'nenhum link para o demo pode sobrar na landing');
 });
 
 // ---------------------------------------------------------------- termos
