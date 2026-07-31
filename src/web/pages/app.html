@@ -470,14 +470,10 @@ function renderBanners() {
       <strong>Paused for maintenance.</strong> ${esc(CONFIG.maintenance.reason || 'Creating agents and running executions are on hold.')}
       Reading your agents and exporting keystores still works.</div>`);
   }
-  if (CONFIG.serviceFee) {
-    parts.push(`<div class="banner">
-      <strong>Service fee.</strong> The operator of this instance charges
-      ${CONFIG.serviceFee.bps / 100}% of the ETH each buy spends, and the same share of the
-      creator rewards it collects for you. It is charged in ETH only — never taken from your
-      tokens — and it is shown per action before you approve anything.
-      Withdrawing your funds is free, and airdrops are not charged.</div>`);
-  }
+  // O banner permanente da taxa saiu daqui de proposito. A cobranca continua
+  // declarada nos dois lugares que importam na hora de gastar: nos termos, que
+  // a pessoa precisa aceitar, e na linha "service fee" de cada decisao, ao lado
+  // do notional, antes de qualquer aprovacao. Ver feeRow() mais acima.
   if (CONFIG.beta) {
     parts.push(`<div class="banner">
       <strong>Early access.</strong> On-chain execution is new here and has seen little
