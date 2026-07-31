@@ -36,10 +36,12 @@ if (!existsSync(DB_PATH)) {
   line('      nova, seus agentes continuam na pasta ANTIGA.');
   line('');
   line('      O que fazer:');
-  line('        1. Procure no computador por uma pasta chamada pons-mm ou');
-  line('           Tsunami que tenha dentro dela uma pasta "data".');
-  line('           (A ferramenta mudou de nome. As pastas antigas se chamam');
-  line('            pons-mm; as novas, Tsunami.)');
+  line('        1. Procure no computador por uma pasta chamada pons-mm,');
+  line('           Tsunami ou Blizzard Agents que tenha dentro dela uma');
+  line('           pasta "data".');
+  line('           (A ferramenta mudou de nome duas vezes: primeiro pons-mm,');
+  line('            depois Tsunami, agora Blizzard Agents. As pastas antigas');
+  line('            continuam com o nome da epoca em que foram criadas.)');
   line('        2. Copie essa pasta "data" inteira para dentro desta pasta:');
   line('           ' + ROOT);
   line('        3. Rode este arquivo de novo.');
@@ -62,7 +64,8 @@ if (agents.length === 0) {
   line('  O banco existe, mas nao ha NENHUM agente gravado nele.');
   line('');
   line('  Se voce criou um agente antes, ele foi criado em outra pasta.');
-  line('  Procure por outra pasta (pons-mm ou Tsunami) com "data" dentro.');
+  line('  Procure por outra pasta (pons-mm, Tsunami ou Blizzard Agents) com');
+  line('  "data" dentro.');
   line('');
   process.exit(0);
 }

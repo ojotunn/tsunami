@@ -1,6 +1,6 @@
 @echo off
 cd /d "%~dp0"
-title Tsunami - menu de testes
+title Blizzard Agents - menu de testes
 
 where node >nul 2>&1
 if errorlevel 1 goto SEM_NODE
@@ -10,7 +10,7 @@ if not exist "src\web\server.js" goto PASTA_ERRADA
 cls
 echo.
 echo  ==================================================
-echo    Tsunami - o que voce quer testar?
+echo    Blizzard Agents - o que voce quer testar?
 echo  ==================================================
 echo.
 echo    1 - Conexao com a chain (doctor)
@@ -178,7 +178,7 @@ exit /b 1
 :PASTA_ERRADA
 echo.
 echo   [X] Nao encontrei os arquivos do projeto nesta pasta.
-echo       Extraia o Tsunami.zip antes (botao direito, "Extrair tudo")
+echo       Extraia o Blizzard Agents.zip antes (botao direito, "Extrair tudo")
 echo       e rode este arquivo de dentro da pasta extraida.
 echo.
 echo   Pasta atual: %CD%

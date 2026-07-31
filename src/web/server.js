@@ -66,7 +66,7 @@ async function inspectTokenCached(address) {
   return value;
 }
 const SECURE = process.env.PONS_SECURE_COOKIES === '1';
-const DOMAIN = process.env.PONS_DOMAIN || 'Tsunami';
+const DOMAIN = process.env.PONS_DOMAIN || 'Blizzard Agents';
 // Só confie em X-Forwarded-* se houver de fato um proxy TLS na frente.
 const TRUST_PROXY = process.env.PONS_TRUST_PROXY === '1';
 
@@ -105,7 +105,7 @@ const SECURITY_HEADERS = {
 // Um aviso que vale ficar registrado aqui: um nome parecido demais com o da
 // pons faz o usuário achar que está no site oficial deles. Como este site pede
 // depósito de fundos, essa confusão custa caro para quem se confunde.
-const BRAND = process.env.PONS_BRAND || 'Tsunami';
+const BRAND = process.env.PONS_BRAND || 'Blizzard Agents';
 
 const escapeHtml = (s) => String(s).replace(/[&<>"']/g, (c) => (
   { '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;', "'": '&#39;' }[c]

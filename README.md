@@ -1,4 +1,4 @@
-# Tsunami
+# Blizzard Agents
 
 Agent-driven market making tools for tokens launched on [pons](https://www.ponsfamily.com/)
 (Robinhood Chain, chain ID 4663).
@@ -91,7 +91,7 @@ node src/cli.js pause "reason" / resume   # stop new agents and executions
 | `PONS_DB` | `./data/pons.sqlite` | Local database |
 | `PONS_KEYSTORE_DIR` | `./data/keystores` | Agent keystores |
 | `PORT` / `HOST` | `8787` / `127.0.0.1` | Where the site listens |
-| `PONS_DOMAIN` | `Tsunami` | Name shown in the sign-in message |
+| `PONS_DOMAIN` | `Blizzard Agents` | Name shown in the sign-in message |
 | `PONS_SECURE_COOKIES` | off | `1` sets `Secure` on the session cookie and enables HSTS |
 | `PONS_TRUST_PROXY` | off | `1` reads `X-Forwarded-For` for rate limiting — only behind your own proxy |
 | `PONS_PASSWORD` | — | Keystore password for non-interactive CLI use; avoid in production |

@@ -1,4 +1,4 @@
-# Tsunami — arquitetura
+# Blizzard Agents — arquitetura
 
 Ferramenta de market making controlada por agentes de IA para tokens lançados na
 [pons](https://www.ponsfamily.com/), sobre a Robinhood Chain.

@@ -1,4 +1,4 @@
-# Deploying Tsunami
+# Deploying Blizzard Agents
 
 The app is a single Node process with no npm dependencies. It needs two things a
 typical serverless host cannot give you: **a process that keeps running**, and **a
@@ -57,10 +57,10 @@ contains them.
 
 ```bash
 # on the server, with Docker installed
-git clone <your repo> Tsunami && cd Tsunami
+git clone <your repo> Blizzard Agents && cd Blizzard Agents
 
 # 1. point your domain's A record at this machine's IP
-# 2. edit Caddyfile: replace Tsunami.example.com and the email
+# 2. edit Caddyfile: replace Blizzard Agents.example.com and the email
 # 3. set the same domain here
 echo "PONS_DOMAIN=app.yourdomain.com" > .env
 echo "PONS_RPC_URL=https://..." >> .env
@@ -77,7 +77,7 @@ Caddy issues and renews the TLS certificate on its own. Nothing else to configur
 
 | Variable | Default | Why it matters |
 |---|---|---|
-| `PONS_DOMAIN` | `Tsunami` | Shown in the message users sign at login. Set it to the real hostname so people can see what they're signing into. |
+| `PONS_DOMAIN` | `Blizzard Agents` | Shown in the message users sign at login. Set it to the real hostname so people can see what they're signing into. |
 | `PONS_SECURE_COOKIES` | off | `1` marks the session cookie `Secure` and enables HSTS. **Required in production**, and it needs real HTTPS in front. |
 | `PONS_TRUST_PROXY` | off | `1` makes rate limiting read `X-Forwarded-For`. Only turn this on when a proxy you control is in front — otherwise anyone can spoof their IP and bypass limits. |
 | `PONS_RPC_URL` | public RPC | Your own endpoint. The public one is rate limited; depending on it to exit a position is a real operational risk. |

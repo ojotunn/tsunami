@@ -1,10 +1,10 @@
 @echo off
 cd /d "%~dp0"
-title Tsunami - endereco publico temporario
+title Blizzard Agents - endereco publico temporario
 
 echo.
 echo  ==================================================
-echo    Tsunami - publicar temporariamente na internet
+echo    Blizzard Agents - publicar temporariamente na internet
 echo  ==================================================
 echo.
 echo   Cria um endereco https publico apontando para o
@@ -64,7 +64,7 @@ exit /b 1
 echo   [X] Nao encontrei os arquivos do projeto nesta pasta.
 echo.
 echo       Isso quase sempre significa que o ZIP nao foi extraido.
-echo       Clique com o botao direito no Tsunami.zip, escolha
+echo       Clique com o botao direito no Blizzard Agents.zip, escolha
 echo       "Extrair tudo", e rode este arquivo de dentro da
 echo       pasta extraida.
 echo.

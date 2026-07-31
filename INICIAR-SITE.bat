@@ -1,10 +1,10 @@
 @echo off
 cd /d "%~dp0"
-title Tsunami - site local
+title Blizzard Agents - site local
 
 echo.
 echo  ==================================================
-echo    Tsunami - iniciando o site na sua maquina
+echo    Blizzard Agents - iniciando o site na sua maquina
 echo  ==================================================
 echo.
 
@@ -21,7 +21,7 @@ netstat -ano | findstr ":8787" | findstr "LISTENING" >nul 2>&1
 if not errorlevel 1 goto JA_RODANDO
 
 echo   Iniciando o servidor...
-echo   Quando aparecer a linha "Tsunami  ^-^>  http://127.0.0.1:8787"
+echo   Quando aparecer a linha "Blizzard Agents  ^-^>  http://127.0.0.1:8787"
 echo   o site esta pronto. O navegador abre sozinho em alguns segundos.
 echo.
 echo   O navegador abre direto no PAINEL (/app), que e onde fica o botao
@@ -57,7 +57,7 @@ echo.
 echo   O botao "Connect wallet" fica nessa pagina (/app). A pagina inicial
 echo   sem o /app e so apresentacao e nao tem botao de conectar.
 echo.
-echo   Se quiser reiniciar, feche a outra janela preta do Tsunami
+echo   Se quiser reiniciar, feche a outra janela preta do Blizzard Agents
 echo   e rode este arquivo de novo.
 echo.
 start "" http://127.0.0.1:8787/app
@@ -82,7 +82,7 @@ exit /b 1
 echo   [X] Nao encontrei os arquivos do projeto nesta pasta.
 echo.
 echo       Isso quase sempre significa que o ZIP nao foi extraido.
-echo       Clique com o botao direito no Tsunami.zip, escolha
+echo       Clique com o botao direito no Blizzard Agents.zip, escolha
 echo       "Extrair tudo", e rode este arquivo de dentro da
 echo       pasta extraida.
 echo.

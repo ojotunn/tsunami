@@ -1,6 +1,6 @@
 @echo off
 cd /d "%~dp0"
-title Tsunami - TESTE COM DINHEIRO REAL
+title Blizzard Agents - TESTE COM DINHEIRO REAL
 
 where node >nul 2>&1
 if errorlevel 1 goto SEM_NODE
@@ -79,7 +79,7 @@ exit /b 0
 
 :PORTA_OCUPADA
 echo.
-echo   [X] Ja existe um Tsunami rodando na porta 8787.
+echo   [X] Ja existe um Blizzard Agents rodando na porta 8787.
 echo.
 echo       Feche a outra janela preta primeiro - inclusive a do
 echo       link publico, se estiver aberta. O envio real precisa
@@ -101,7 +101,7 @@ exit /b 1
 :PASTA_ERRADA
 echo.
 echo   [X] Nao encontrei os arquivos do projeto nesta pasta.
-echo       Extraia o Tsunami.zip antes e rode de dentro da pasta.
+echo       Extraia o Blizzard Agents.zip antes e rode de dentro da pasta.
 echo.
 echo   Pasta atual: %CD%
 echo.

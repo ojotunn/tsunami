@@ -494,7 +494,7 @@ test('nenhum placeholder de marca vaza para a página servida', async () => {
     // Qualquer token, não só o da marca: este arquivo roda sem PONS_FEE_ADDRESS,
     // então é aqui que se prova que o aviso de taxa some limpo quando não há taxa.
     assert.ok(!html.includes('{{'), `${path} serviu um placeholder cru`);
-    assert.ok(html.includes('Tsunami'), `${path} deveria trazer a marca padrão`);
+    assert.ok(html.includes('Blizzard'), `${path} deveria trazer a marca padrão`);
     // Só nas páginas montadas no servidor. Em /app a frase existe no JS inline
     // sempre; o que a esconde é CONFIG.serviceFee vir null, coberto em fee-web.
     if (path !== '/app') {

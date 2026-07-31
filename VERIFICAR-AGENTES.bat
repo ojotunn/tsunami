@@ -1,10 +1,10 @@
 @echo off
 cd /d "%~dp0"
-title Tsunami - verificar agentes
+title Blizzard Agents - verificar agentes
 
 echo.
 echo  ==================================================
-echo    Tsunami - onde estao os meus agentes
+echo    Blizzard Agents - onde estao os meus agentes
 echo  ==================================================
 echo.
 echo   Este arquivo so LE. Ele nao apaga e nao muda nada.
@@ -36,7 +36,7 @@ exit /b 1
 :PASTA_ERRADA
 echo   [X] Nao encontrei os arquivos do projeto nesta pasta.
 echo.
-echo       Extraia o Tsunami.zip e rode este arquivo de dentro
+echo       Extraia o Blizzard Agents.zip e rode este arquivo de dentro
 echo       da pasta extraida.
 echo.
 echo   Pasta atual: %CD%

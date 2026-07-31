@@ -1,18 +1,18 @@
-Tsunami - guia de teste
+Blizzard Agents - guia de teste
 =======================
 
 A FERRAMENTA MUDOU DE NOME  <<< LEIA SE VOCE JA USAVA
 -----------------------------------------------------
-  Antes se chamava pons-mm. Agora se chama Tsunami.
+  Antes se chamava pons-mm. Agora se chama Blizzard Agents.
 
   Isso cria uma armadilha: ao extrair o zip novo, o Windows cria uma
-  pasta chamada Tsunami, e a pasta antiga pons-mm fica para tras com
+  pasta chamada Blizzard Agents, e a pasta antiga pons-mm fica para tras com
   as CHAVES dos seus agentes dentro dela.
 
   Antes de apagar qualquer coisa:
     1. Abra a pasta antiga pons-mm.
     2. Copie a pasta "data" inteira de dentro dela.
-    3. Cole dentro da pasta Tsunami nova.
+    3. Cole dentro da pasta Blizzard Agents nova.
     4. Rode VERIFICAR-AGENTES.bat e confirme que os agentes aparecem.
     5. So depois disso apague a pasta antiga.
 
@@ -60,7 +60,7 @@ SE O AGENTE SUMIU DA TELA
 
 ANTES DE TUDO
 -------------
-  1. Extraia o Tsunami.zip de verdade.
+  1. Extraia o Blizzard Agents.zip de verdade.
      Botao direito no arquivo -> "Extrair tudo".
      Rodar de dentro do visualizador de zip do Windows nao funciona.
 

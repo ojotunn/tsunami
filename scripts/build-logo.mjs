@@ -1,4 +1,4 @@
-// Gera o logo do Tsunami em PNG, sem dependencia nenhuma.
+// Gera o logo do projeto em PNG, sem dependencia nenhuma.
 //
 // Rasteriza os tracos vetoriais na mao: achata as curvas de Bezier em
 // polilinhas, calcula a distancia de cada pixel ate elas e usa essa distancia
@@ -171,7 +171,7 @@ const destino = process.argv[2] || './logo';
 mkdirSync(destino, { recursive: true });
 
 for (const lado of [1024, 512, 256, 128, 64, 32]) {
-  const arquivo = join(destino, `tsunami-${lado}.png`);
+  const arquivo = join(destino, `brand-${lado}.png`);
   const bytes = png(desenhar(lado), lado);
   writeFileSync(arquivo, bytes);
   console.log(`${arquivo}  ${lado}x${lado}  ${(bytes.length / 1024).toFixed(1)} kb`);

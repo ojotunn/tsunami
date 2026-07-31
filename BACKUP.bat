@@ -1,10 +1,10 @@
 @echo off
 cd /d "%~dp0"
-title Tsunami - backup da pasta data
+title Blizzard Agents - backup da pasta data
 
 echo.
 echo  ==================================================
-echo    Tsunami - backup das chaves e do banco
+echo    Blizzard Agents - backup das chaves e do banco
 echo  ==================================================
 echo.
 echo   Copia a pasta "data" para a sua Area de Trabalho.
@@ -17,7 +17,7 @@ echo.
 
 if not exist "data" goto SEM_DATA
 
-set "DEST=%USERPROFILE%\Desktop\Tsunami-backup-data"
+set "DEST=%USERPROFILE%\Desktop\Blizzard Agents-backup-data"
 
 echo   Copiando para:
 echo   %DEST%
