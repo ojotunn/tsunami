@@ -430,11 +430,15 @@ test('status do operador exige o endereço configurado', async () => {
   assert.equal((await call('GET', '/api/operator/status', { cookie: qualquer.cookie })).status, 403);
 });
 
-test('config anuncia manutenção, beta e teto sugerido', async () => {
+// `beta` e `depositAdviceEth` sumiram junto com o aviso de early access: o
+// produto foi lançado, e um alerta dizendo "isto é novo, cuidado" em toda
+// visita deixa de informar e vira ruído. O que precisa ser dito sobre risco
+// está nos termos, que são aceitos antes de criar agente.
+test('config anuncia manutenção e não carrega mais o aviso de beta', async () => {
   const { body } = await call('GET', '/api/config');
   assert.equal(typeof body.maintenance.on, 'boolean');
-  assert.equal(typeof body.beta, 'boolean');
-  assert.ok(body.depositAdviceEth);
+  assert.equal(body.beta, undefined);
+  assert.equal(body.depositAdviceEth, undefined);
 });
 
 // ---------------------------------------------------------------- regressão: endereço em minúsculas

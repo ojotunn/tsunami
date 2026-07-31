@@ -143,7 +143,6 @@
           <div class="mono" id="createdAddr"></div>
         </div>
         <div class="note warn">Save this password. Without it the keystore — and the agent's funds — cannot be recovered.</div>
-        <div class="note" id="depositAdvice"></div>
       </div>
     </div>
 
@@ -343,9 +342,6 @@ $('createBtn').onclick = async () => {
     });
     $('created').style.display = 'block';
     $('createdAddr').textContent = agent.address;
-    $('depositAdvice').textContent = CONFIG.beta
-      ? `While this is in early access, keep deposits small — around ${CONFIG.depositAdviceEth} ETH is a sensible ceiling.`
-      : '';
     $('password').value = '';
     await loadAgents(agent.id);
   } catch (e) { alert(e.message); }
@@ -521,14 +517,13 @@ function renderBanners() {
   // declarada nos dois lugares que importam na hora de gastar: nos termos, que
   // a pessoa precisa aceitar, e na linha "service fee" de cada decisao, ao lado
   // do notional, antes de qualquer aprovacao. Ver feeRow() mais acima.
-  if (CONFIG.beta) {
-    parts.push(`<div class="banner">
-      <strong>Early access.</strong> On-chain execution is new here and has seen little
-      real-world use. ${CONFIG.liveExecution
-        ? `Do not deposit more than you are willing to lose — around ${esc(CONFIG.depositAdviceEth)} ETH is a sensible ceiling while this is being proven.`
-        : 'Sending transactions is currently switched off on this server: the agent will analyse and propose, but nothing moves on chain.'}
-      </div>`);
-  }
+  // O aviso de "early access" saiu: o produto foi lancado, e um alerta que diz
+  // "isto e novo, cuidado" em toda visita deixa de informar e vira ruido. O que
+  // realmente precisa ser dito sobre risco esta nos termos, que sao aceitos
+  // antes de criar agente e de novo antes da primeira execucao real.
+  //
+  // Sobram aqui so os banners que carregam informacao acionavel: termos
+  // mudaram, e servico em manutencao.
   $('betaBanner').innerHTML = parts.join('');
 
   // Sem envio real ligado no servidor o botão principal viraria promessa vazia:

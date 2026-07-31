@@ -100,8 +100,6 @@ node src/cli.js pause "reason" / resume   # stop new agents and executions
 | `PONS_FACTORY` / `PONS_LOCKER` / `PONS_WETH` | mainnet values | Override contract addresses (needed on testnet) |
 | `PONS_ADMIN_ADDRESS` | — | Your wallet; the only account that can pause the service and see operator status |
 | `PONS_MAINTENANCE` | off | `1` starts the server paused (creating and executing blocked) |
-| `PONS_BETA` | on | `0` removes the early-access banner |
-| `PONS_DEPOSIT_ADVICE` | `0.05` | Deposit ceiling suggested on screen while in early access |
 | `PONS_MASTER_KEY` | — | Seals keystores at rest so a stolen volume is not enough. Generate with `node src/cli.js master-key` and keep it off the server |
 | `PONS_FEE_ADDRESS` | — | Wallet that receives the service fee. **Unset means no fee at all** |
 | `PONS_FEE_BPS` | `500` | Service fee in basis points (500 = 5%). Ceiling: 1000 (10%) |

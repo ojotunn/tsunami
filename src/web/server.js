@@ -77,7 +77,6 @@ const LIVE_EXECUTION = process.env.PONS_ALLOW_LIVE_EXECUTION === '1';
 // Valor sugerido de depósito enquanto a execução é nova. Não é imposto pelo
 // contrato — é um aviso honesto na tela para ninguém colocar mais do que aceita
 // perder num software que acabou de estrear.
-const DEPOSIT_ADVICE_ETH = process.env.PONS_DEPOSIT_ADVICE || '0.05';
 startCleanup();
 
 // CSP restrita: o front é inline por design (arquivo único), então 'unsafe-inline'
@@ -259,8 +258,6 @@ const publicRoutes = {
     brand: BRAND,
     liveExecution: LIVE_EXECUTION,
     maintenance: maintenance(db),
-    depositAdviceEth: DEPOSIT_ADVICE_ETH,
-    beta: process.env.PONS_BETA !== '0',
     // Taxa de serviço: null quando não há. O endereço é público de qualquer
     // forma assim que o primeiro pagamento sai; `problem` é que NÃO sai daqui,
     // porque é diagnóstico do operador, não informação do usuário.
