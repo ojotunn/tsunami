@@ -124,11 +124,11 @@
   <div>
     <div class="card">
       <h2>Create agent</h2>
-      <label>Label</label>
+      <label>Agent name</label>
       <input id="label" placeholder="my token's agent">
       <label>Target token</label>
       <input id="token" class="mono" placeholder="0x…">
-      <label>Keystore password</label>
+      <label>Password</label>
       <input id="password" type="password" placeholder="at least 8 characters">
       <label style="display:flex;gap:8px;align-items:flex-start;margin-top:14px;cursor:pointer">
         <input type="checkbox" id="terms" style="width:auto;margin-top:3px">
@@ -181,7 +181,7 @@
         <!-- Senha: aparece so no primeiro start desta aba. Depois disso o
              botao age sozinho, e este bloco fica escondido. -->
         <div id="askPw" style="display:none">
-          <p class="cap">Keystore password · unlocks this agent for this browser tab</p>
+          <p class="cap">Password · unlocks this agent for this browser tab</p>
           <input type="password" id="livePw" placeholder="agent password" autocomplete="off">
         </div>
 
@@ -709,7 +709,7 @@ window.approve = async (id) => {
   slot.innerHTML = `
     <div class="note ok" style="margin-top:10px">Approved and recorded.</div>
     ${CONFIG.liveExecution
-      ? `<label>Keystore password</label>
+      ? `<label>Password</label>
          <input type="password" id="pw-${id}" placeholder="agent password">
          <button class="sm" style="margin-top:8px" onclick="execute(${id}, true)">Send</button>`
       : `<div class="note warn">Sending is off on this server. Turn it on with
