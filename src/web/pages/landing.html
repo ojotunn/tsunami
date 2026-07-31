@@ -34,6 +34,12 @@
   h1{font-size:clamp(32px,5.2vw,50px);line-height:1.1;letter-spacing:-.03em;
      font-weight:700;max-width:17ch;margin-bottom:20px}
   h1 em{font-style:normal;color:var(--accent)}
+  /* O titulo virou a marca, uma palavra so em maiusculas. Caixa alta pede
+     espacamento POSITIVO — o -.03em acima existe para frase longa em caixa
+     baixa e aqui deixaria as letras coladas. Sem palavra para quebrar,
+     tambem nao faz sentido manter o limite de 17ch. */
+  h1.wordmark{font-size:clamp(46px,11vw,92px);letter-spacing:.02em;max-width:none;
+    margin-bottom:18px}
   .lead{font-size:18px;color:var(--dim);max-width:60ch;margin-bottom:30px}
   .cta{display:flex;gap:12px;flex-wrap:wrap;align-items:center}
   .cta small{color:var(--dim);font-size:13px}
@@ -101,11 +107,10 @@
 
 <header><div class="wrap">
   <div class="badge">Robinhood Chain · chain 4663 · built for pons launches</div>
-  <h1>Your token works the night shift <em>without you</em></h1>
+  <h1 class="wordmark">TSU<em>NAMI</em></h1>
   <p class="lead">
-    Buy back and burn on a schedule. Turn creator rewards into buy pressure automatically.
-    Catch the dips while you're asleep. Reward the holders who actually showed up.
-    You set the rules once — the agent does the rest, and shows its work every time.
+    Tsunami brings functions that exist on pump.fun to Robinhood Chain,
+    through automated AI agents.
   </p>
   <div class="cta">
     <a class="btn" href="/app">Launch your agent</a>
