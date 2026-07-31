@@ -34,6 +34,27 @@
   button.sm{padding:6px 12px;font-size:12px}
   button:disabled{opacity:.4;cursor:not-allowed}
 
+  /* --- bloco de execucao, na linguagem da landing ------------------------
+     Uma acao principal so. O resto — a acao secundaria e o trancar — vira
+     link de texto, para nada competir com o botao que gasta dinheiro. */
+  .runbar{margin-top:4px}
+  .runbar .rule{height:2px;width:38px;border-radius:2px;margin:18px 0 14px;
+    background:linear-gradient(90deg,var(--accent-hi,#20EBE3),#1E6FB8)}
+  .runbar #runBtn{background:linear-gradient(135deg,#20EBE3,#1E6FB8);color:#00171c;
+    font-size:13.5px;padding:10px 20px}
+  .cap{font-size:11px;letter-spacing:.08em;text-transform:uppercase;color:var(--dim);
+    margin-bottom:7px}
+  .linky{background:none;border:0;padding:0;margin-left:14px;color:var(--dim);
+    font:inherit;font-size:12.5px;cursor:pointer;text-decoration:underline;
+    text-underline-offset:3px}
+  .linky:hover{color:var(--accent)}
+  .linky:disabled{opacity:.4;cursor:not-allowed}
+  .state{display:flex;align-items:center;gap:9px;font-size:12px;color:var(--dim);
+    margin-bottom:13px}
+  .dot{width:7px;height:7px;border-radius:50%;background:var(--accent);flex:0 0 7px}
+  .warnline{border-left:2px solid var(--accent);padding-left:12px;color:var(--dim);
+    font-size:12px;margin-top:16px;max-width:58ch}
+
   main{max-width:1220px;margin:0 auto;padding:26px 26px 90px;
        display:grid;grid-template-columns:330px 1fr;gap:22px;align-items:start}
   @media(max-width:940px){main{grid-template-columns:1fr}}
@@ -154,18 +175,28 @@
     <div class="card">
       <h2>Functions</h2>
       <div id="functions"><div class="empty">loading…</div></div>
-      <button id="runBtn" disabled style="margin-top:6px">Run agent</button>
 
-      <!-- Caminho direto: roda e envia. So aparece quando o servidor permite
-           envio real; sem isso o botao prometeria algo que nao acontece. -->
-      <div id="runLive" style="display:none;margin-top:16px;padding-top:14px;
-                               border-top:1px solid var(--line)">
-        <label>Keystore password (used only to sign, never stored)</label>
-        <input type="password" id="livePw" placeholder="agent password" autocomplete="off">
-        <button id="runLiveBtn" disabled style="margin-top:8px">Run and send for real</button>
-        <div class="note warn" style="margin-top:8px">Sends every decision your policy
-          approves, without stopping for review one by one. Your risk policy, the protocol
-          limits and the on-chain check before each transaction all still apply.</div>
+      <div class="runbar">
+        <div class="rule"></div>
+
+        <!-- Senha: aparece so no primeiro start desta aba. Depois disso o
+             botao age sozinho, e este bloco fica escondido. -->
+        <div id="askPw" style="display:none">
+          <p class="cap">Keystore password · unlocks this agent for this browser tab</p>
+          <input type="password" id="livePw" placeholder="agent password" autocomplete="off">
+        </div>
+
+        <div id="agentState" class="state" style="display:none">
+          <span class="dot"></span><span id="stateText"></span>
+          <button class="linky" onclick="forgetPassword()">lock</button>
+        </div>
+
+        <button id="runBtn" disabled>Start agent</button>
+        <button class="linky" id="dryBtn" disabled onclick="startAgent(false)">preview without sending</button>
+
+        <div class="warnline">Runs the agent and sends every decision your policy approves,
+          without stopping for review one by one. Your risk policy, the protocol limits and
+          the on-chain check before each transaction all still apply.</div>
       </div>
     </div>
 
@@ -281,7 +312,7 @@ async function loadAgents(preferId = null) {
   if (agents.length === 0) {
     AGENT = null;
     $('runBtn').disabled = true;
-    $('runLiveBtn').disabled = true;
+    $('dryBtn').disabled = true;
     $('agentInfo').innerHTML = `
       <div class="kv"><span>agents on this account</span><span>none yet</span></div>
       <p class="muted" style="margin:10px 0 0">
@@ -329,13 +360,15 @@ $('agentSelect').onchange = (e) => selectAgent(e.target.value);
 async function selectAgent(id) {
   if (!id) {
     AGENT = null; $('agentInfo').innerHTML = '';
-    $('runBtn').disabled = true; $('runLiveBtn').disabled = true;
+    $('runBtn').disabled = true; $('dryBtn').disabled = true;
+    renderRunState();
     return;
   }
   AGENT = await api('GET', '/api/agents/' + id);
   try { sessionStorage.setItem('pons_agent', id); } catch { /* modo privado: sem memória, sem problema */ }
   $('runBtn').disabled = false;
-  $('runLiveBtn').disabled = false;
+  $('dryBtn').disabled = false;
+  renderRunState();
   // O token alvo é editável aqui. Antes só dava para escolher na criação, e
   // quem errasse o endereço tinha que criar outro agente — carteira nova, chave
   // nova, fundos para mover. Trocar um campo de texto não pode custar isso.
@@ -502,9 +535,14 @@ function renderBanners() {
   }
   $('betaBanner').innerHTML = parts.join('');
 
-  // Sem envio real ligado no servidor, o botao direto prometeria algo que nao
-  // acontece — o pedido voltaria como ensaio e o usuario acharia que enviou.
-  $('runLive').style.display = CONFIG.liveExecution ? 'block' : 'none';
+  // Sem envio real ligado no servidor o botão principal viraria promessa vazia:
+  // o pedido voltaria como ensaio e a pessoa acharia que enviou. Aqui ele
+  // assume o texto do que de fato acontece.
+  if (!CONFIG.liveExecution) {
+    $('runBtn').textContent = 'Run agent (nothing is sent)';
+    $('dryBtn').style.display = 'none';
+  }
+  renderRunState();
 }
 
 /** Grava o que está nos campos antes de rodar, senão o agente usa o salvo. */
@@ -520,39 +558,64 @@ async function salvarFuncoes() {
   }
 }
 
-$('runBtn').onclick = async () => {
-  const b = $('runBtn');
-  b.disabled = true; b.textContent = 'running…';
-  try {
-    await salvarFuncoes();
-    renderResult(await api('POST', `/api/agents/${AGENT.id}/run`, { persist: true }));
-  } catch (e) {
-    $('result').innerHTML = `<div class="note bad">${esc(e.message)}</div>`;
-  }
-  b.disabled = false; b.textContent = 'Run agent';
+// ------------------------------------------------------ iniciar o agente
+//
+// Um botão só: roda o agente, aprova o que a política liberou e envia.
+//
+// A senha é pedida UMA VEZ por aba. Ela não é uma trava de formulário — é o que
+// decifra a chave privada, então sem ela não existe assinatura. Depois do
+// primeiro start fica no sessionStorage desta aba e some quando a aba fecha. O
+// servidor continua sem guardá-la: recebe, usa e esquece a cada pedido.
+//
+// O que este botão NÃO pula: decisão com qualquer violação fica de fora, a
+// política de risco e os limites do protocolo seguem valendo no servidor, e
+// cada transação continua passando por eth_call antes de ser assinada. Aqui se
+// pula a revisão humana, não as verificações.
+
+const chaveSenha = (id) => 'pons_pw_' + id;
+const senhaDaAba = (id) => { try { return sessionStorage.getItem(chaveSenha(id)); } catch { return null; } };
+
+/** Só guarda depois que o servidor aceitou — senha errada nunca fica salva. */
+function guardarSenha(senha) {
+  try { sessionStorage.setItem(chaveSenha(AGENT.id), senha); } catch { /* modo privado */ }
+  $('livePw').value = '';
+  renderRunState();
+}
+
+window.forgetPassword = () => {
+  try { sessionStorage.removeItem(chaveSenha(AGENT.id)); } catch { /* modo privado */ }
+  renderRunState();
 };
 
-// ------------------------------------------------- rodar e enviar de uma vez
-//
-// Faz o caminho inteiro sem parar decisão por decisão: roda, aprova o que a
-// política liberou e envia. O que NÃO muda por causa deste botão, e é o que o
-// torna aceitável: cada decisão continua passando pela política de risco e
-// pelos limites do protocolo no servidor, e cada transação continua passando
-// por eth_call antes de ser assinada. Aqui se pula a revisão humana, não as
-// verificações.
-//
-// Decisão com qualquer violação fica de fora — o botão não tem poder de
-// atropelar o que a política recusou.
-$('runLiveBtn').onclick = async () => {
-  const senha = $('livePw').value;
-  if (!senha) return alert('enter the agent keystore password');
+/** Campo de senha ou linha de estado, conforme esta aba já conheça o agente. */
+function renderRunState() {
+  if (!AGENT) { $('askPw').style.display = 'none'; $('agentState').style.display = 'none'; return; }
+  const destravado = !!senhaDaAba(AGENT.id);
+  $('askPw').style.display = (destravado || !CONFIG.liveExecution) ? 'none' : 'block';
+  $('agentState').style.display = destravado ? 'flex' : 'none';
+  if (destravado) {
+    $('stateText').textContent =
+      'Unlocked for this tab · ' + AGENT.address.slice(0, 10) + '…' + AGENT.address.slice(-4);
+  }
+}
 
-  const b = $('runLiveBtn');
-  b.disabled = true; b.textContent = 'running…';
+window.startAgent = async (live = true) => {
+  const b = live ? $('runBtn') : $('dryBtn');
+  const rotulo = b.textContent;
+
+  // O preview não envia nada, então não precisa de senha nenhuma.
+  let senha = null;
+  if (live) {
+    senha = senhaDaAba(AGENT.id) || $('livePw').value;
+    if (!senha) { $('livePw').focus(); return alert('enter the agent keystore password once to start it'); }
+  }
+
+  b.disabled = true; b.textContent = live ? 'starting…' : 'reading…';
   try {
     await salvarFuncoes();
     const out = await api('POST', `/api/agents/${AGENT.id}/run`, { persist: true });
     renderResult(out);
+    if (!live) return;
 
     const aprovaveis = (out.results || [])
       .flatMap((r) => r.decisions || [])
@@ -564,13 +627,11 @@ $('runLiveBtn').onclick = async () => {
       return;
     }
 
-    // Soma o que vai sair da carteira: o que entra no mercado mais a taxa.
+    // Soma o que sai da carteira: o que entra no mercado mais a taxa.
     const totalWei = aprovaveis.reduce((s, d) =>
       s + BigInt(d.decision.notionalWei || 0) + BigInt(d.decision.feeWei || 0), 0n);
     if (!confirm(`Send ${aprovaveis.length} decision(s) for real now, spending up to `
-      + `${eth(totalWei.toString())} ETH from the agent wallet? This cannot be undone.`)) {
-      return;
-    }
+      + `${eth(totalWei.toString())} ETH from the agent wallet? This cannot be undone.`)) return;
 
     for (const d of aprovaveis) {
       const alvo = $('exec-' + d.id);
@@ -578,6 +639,7 @@ $('runLiveBtn').onclick = async () => {
       try {
         if (d.verdict.needsApproval) await api('POST', `/api/decisions/${d.id}/approve`);
         const r = await api('POST', `/api/decisions/${d.id}/execute`, { password: senha, live: true });
+        guardarSenha(senha);
         if ($('run-' + d.id)) {
           $('run-' + d.id).outerHTML = `<div class="note ok">Executed ${r.steps.length} step(s)</div>` +
             r.steps.map((s) => `<div class="note${s.failed ? ' bad' : ''}">${esc(s.label)}${
@@ -586,17 +648,19 @@ $('runLiveBtn').onclick = async () => {
               : s.hash ? ' — <span class="mono">' + esc(s.hash.slice(0, 18)) + '…</span>' : ''}</div>`).join('');
         }
       } catch (e) {
-        // Uma decisão que falha não interrompe as outras: elas são independentes
-        // e parar aqui deixaria metade do plano sem explicação na tela.
+        // Uma decisão que falha não interrompe as outras: são independentes, e
+        // parar aqui deixaria metade do plano sem explicação na tela.
         if ($('run-' + d.id)) $('run-' + d.id).outerHTML = `<div class="note bad">${esc(e.message)}</div>`;
       }
     }
-    $('livePw').value = '';
   } catch (e) {
     $('result').innerHTML = `<div class="note bad">${esc(e.message)}</div>`;
   }
-  b.disabled = false; b.textContent = 'Run and send for real';
+  b.disabled = false; b.textContent = rotulo;
 };
+
+$('runBtn').onclick = () => startAgent(true);
+
 
 // Taxa de serviço na tela da decisão. Na coleta de rewards o número é
 // estimativa — dizer isso evita a reclamação de quando não bater.
