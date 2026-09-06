@@ -154,6 +154,30 @@
       <div id="agentInfo"></div>
     </div>
 
+    <div class="card" id="policyCard" style="display:none">
+      <h2>Risk policy</h2>
+      <p style="font-size:12px;color:var(--dim)">
+        Your own limits. Anything the agent proposes above them is blocked before it becomes a transaction.
+      </p>
+      <div class="grid2">
+        <div><label>Max per trade (ETH)</label><input id="pTrade" inputmode="decimal"></div>
+        <div><label>Max per day (ETH)</label><input id="pDaily" inputmode="decimal"></div>
+        <div><label>Gas reserve (ETH)</label><input id="pReserve" inputmode="decimal"></div>
+        <div><label>Min pool depth (ETH)</label><input id="pLiq" inputmode="decimal"></div>
+        <div><label>Max trades per hour</label><input id="pPerHour" inputmode="numeric"></div>
+        <div><label>Seconds between trades</label><input id="pGap" inputmode="numeric"></div>
+      </div>
+      <label>Mode</label>
+      <select id="pMode">
+        <option value="propose">propose — every decision waits for my approval</option>
+        <option value="auto">auto — send without asking below the amount below</option>
+      </select>
+      <label>Ask my approval above (ETH) · auto mode only</label>
+      <input id="pApprove" inputmode="decimal">
+      <button class="ghost sm" id="savePolicyBtn" style="margin-top:12px">Save policy</button>
+      <div id="policyOut"></div>
+    </div>
+
     <div class="card">
       <h2>Delegate creator rewards</h2>
       <p style="font-size:12px;color:var(--dim)">
@@ -355,6 +379,7 @@ $('agentSelect').onchange = (e) => selectAgent(e.target.value);
 async function selectAgent(id) {
   if (!id) {
     AGENT = null; $('agentInfo').innerHTML = '';
+    $('policyCard').style.display = 'none';
     $('runBtn').disabled = true;
     renderRunState();
     return;
@@ -390,6 +415,7 @@ async function selectAgent(id) {
     </div>
     <div id="wOut"></div>`;
   $('saveTokenBtn').onclick = saveAgentToken;
+  renderPolicy();
   $('wCheckBtn').onclick = () => withdraw(false);
   $('wSendBtn').onclick = () => withdraw(true);
   if (AGENT.target_token) $('token').value = AGENT.target_token;
@@ -397,6 +423,59 @@ async function selectAgent(id) {
     const cb = $('on-' + f.function_id);
     if (cb) cb.checked = !!f.enabled;
   }
+}
+
+// wei -> ETH legível, sem perder casas: BigInt, não float.
+function weiToEth(wei) {
+  const v = BigInt(wei || 0);
+  const whole = v / 10n ** 18n;
+  const frac = (v % 10n ** 18n).toString().padStart(18, '0').replace(/0+$/, '');
+  return frac ? `${whole}.${frac}` : String(whole);
+}
+
+/** Preenche o card da política com o que o agente tem salvo. */
+function renderPolicy() {
+  const p = AGENT && AGENT.policy;
+  $('policyCard').style.display = p ? 'block' : 'none';
+  if (!p) return;
+  $('pTrade').value = weiToEth(p.maxNotionalPerTradeWei);
+  $('pDaily').value = weiToEth(p.maxDailyNotionalWei);
+  $('pReserve').value = weiToEth(p.reserveGasWei);
+  $('pLiq').value = weiToEth(p.minPoolLiquidityWei);
+  $('pPerHour').value = p.maxTradesPerHour;
+  $('pGap').value = p.minSecondsBetweenTrades;
+  $('pMode').value = p.mode;
+  $('pApprove').value = weiToEth(p.requireApprovalAboveWei);
+  $('policyOut').innerHTML = '';
+  $('savePolicyBtn').onclick = savePolicy;
+}
+
+/**
+ * Grava a política. Os valores vão em ETH, como estão na tela; o servidor
+ * converte e valida. O erro volta com a frase do servidor, que já explica o
+ * que ajustar (por exemplo, o teto por operação acima do teto diário).
+ */
+async function savePolicy() {
+  const btn = $('savePolicyBtn'); const out = $('policyOut');
+  btn.disabled = true; btn.textContent = 'saving…'; out.innerHTML = '';
+  try {
+    const r = await api('PATCH', '/api/agents/' + AGENT.id + '/policy', {
+      maxPerTradeEth: $('pTrade').value.trim(),
+      maxDailyEth: $('pDaily').value.trim(),
+      reserveGasEth: $('pReserve').value.trim(),
+      minPoolLiquidityEth: $('pLiq').value.trim(),
+      maxTradesPerHour: $('pPerHour').value.trim(),
+      minSecondsBetweenTrades: $('pGap').value.trim(),
+      mode: $('pMode').value,
+      approveAboveEth: $('pApprove').value.trim(),
+    });
+    AGENT.policy = r.policy;
+    renderPolicy();
+    out.innerHTML = '<div class="note ok">Saved. Run the agent again — it re-checks every proposal against the new limits.</div>';
+  } catch (e) {
+    out.innerHTML = `<div class="note bad">${esc(e.message)}</div>`;
+  }
+  btn.disabled = false; btn.textContent = 'Save policy';
 }
 
 /**

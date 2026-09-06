@@ -24,7 +24,8 @@ import { encodeFunctionData } from '../core/abi.js';
 import { explainRpcError } from '../chain/errors.js';
 import { inspectToken } from '../chain/token.js';
 import { delegationCallsV2 } from '../chain/v2.js';
-import { formatUnits } from '../market/pricing.js';
+import { formatUnits, parseUnits } from '../market/pricing.js';
+import { validatePolicy } from '../agent/policy.js';
 import {
   migrateAuth, issueNonce, verifyLogin, sessionFromToken, logout, loginMessage,
   parseCookies, sessionCookie, clearCookie, assertOwnership, acceptTerms, hasAcceptedTerms,
@@ -541,6 +542,52 @@ const privateRoutes = {
     }
 
     return { ok: true, agent: getAgent(db, id), tokenInfo };
+  },
+
+  /**
+   * Edita a política de risco do agente. Os valores chegam em ETH (o que a
+   * pessoa lê na tela) e são guardados em wei; o que não vier fica como está.
+   *
+   * Existe porque o teto padrão de 0,01 ETH por operação bloqueava a compra
+   * de quem depositou mais do que isso, e a única saída era criar outro
+   * agente — carteira nova, fundos para mover — para voltar ao mesmo teto.
+   */
+  'PATCH /api/agents/:id/policy': async (body, { id }, ctx) => {
+    assertOwnership(db, id, ctx.session.address);
+    const agent = getAgent(db, id);
+    const next = { ...agent.policy };
+
+    const eth = (key, field) => {
+      if (body[key] === undefined || body[key] === '') return;
+      const raw = String(body[key]).trim();
+      if (!/^\d+(\.\d+)?$/.test(raw)) throw new Error(`${key} must be a positive amount of ETH, like 0.05`);
+      next[field] = parseUnits(raw, 18).toString();
+    };
+    const int = (key, field, { min = 0, max = 100000 } = {}) => {
+      if (body[key] === undefined || body[key] === '') return;
+      const n = Number(body[key]);
+      if (!Number.isInteger(n) || n < min || n > max) throw new Error(`${key} must be a whole number between ${min} and ${max}`);
+      next[field] = n;
+    };
+    eth('maxPerTradeEth', 'maxNotionalPerTradeWei');
+    eth('maxDailyEth', 'maxDailyNotionalWei');
+    eth('reserveGasEth', 'reserveGasWei');
+    eth('approveAboveEth', 'requireApprovalAboveWei');
+    eth('minPoolLiquidityEth', 'minPoolLiquidityWei');
+    int('maxTradesPerHour', 'maxTradesPerHour', { min: 1, max: 1000 });
+    int('minSecondsBetweenTrades', 'minSecondsBetweenTrades', { min: 0, max: 86400 });
+    if (body.mode !== undefined) next.mode = String(body.mode);
+
+    let policy;
+    try { policy = validatePolicy(next); }
+    catch (err) {
+      // A mensagem do validador fala em wei; a pessoa digitou ETH.
+      const msg = err.message.replace('maxNotionalPerTradeWei cannot exceed maxDailyNotionalWei',
+        'the per-trade limit cannot be higher than the daily limit');
+      throw new Error(msg);
+    }
+    db.prepare('UPDATE agents SET policy = ? WHERE id = ?').run(JSON.stringify(policy), agent.id);
+    return { ok: true, policy };
   },
 
   'GET /api/agents/:id': async (_b, { id }, ctx) => {
