@@ -31,7 +31,6 @@ Three pages:
 | Function | Needs | What it does |
 |---|---|---|
 | Buyback & burn | capital | Buys the token and sends it to the burn address |
-| Creator rewards → buyback & burn | delegation | Collects rewards, reserves until graduation, then puts 100% into buy and burn |
 | Scheduled buys (DCA) | capital | Fixed amount on your interval, with a total budget and impact ceiling |
 | Dip buying | capital | Ladder steps against the window high, with a cooldown |
 | Airdrop | a list | Batched distribution to recipients you provide, validated first |

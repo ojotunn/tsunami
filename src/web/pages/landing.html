@@ -6,7 +6,7 @@
 <title>{{BRAND}} · grow your token in one click</title>
 <meta name="description" content="Every tool your pons token needs to grow — buyback and burn, creator-reward compounding, scheduled buys, dip buying and airdrops — run around the clock by an AI agent you control.">
 <meta property="og:title" content="{{BRAND}} — grow your token in one click">
-<meta property="og:description" content="AI agents for pons tokens on Robinhood Chain. Buyback and burn, creator rewards, scheduled buys, airdrops. No private key, ever.">
+<meta property="og:description" content="AI agents for pons tokens on Robinhood Chain. Buyback and burn, scheduled buys, dip buying, airdrops. Send ETH to your agent and it runs. No private key, ever.">
 <meta property="og:image" content="/assets/brand-512.png?v={{ASSETS_V}}">
 <link rel="icon" href="/assets/brand-32.png?v={{ASSETS_V}}" sizes="32x32">
 <link rel="apple-touch-icon" href="/assets/brand-180.png?v={{ASSETS_V}}">
@@ -258,8 +258,8 @@
       <div class="eyebrow"><i></i>AI agents for pons tokens · Robinhood Chain</div>
       <h1>Every tool your token needs to grow. <span class="grad-text">One click.</span></h1>
       <p class="lead">
-        Buyback and burn, creator-reward compounding, scheduled buys, dip buying and airdrops —
-        run around the clock by an AI agent you control from a single panel.
+        Buyback and burn, scheduled buys, dip buying and airdrops — run around the clock by an
+        AI agent you control from a single panel. Send ETH to its wallet, turn the functions on, done.
       </p>
       <div class="cta">
         <a class="btn" href="/app">Launch your agent →</a>
@@ -278,8 +278,8 @@
         <div class="ph"><i></i><b>Agent · live</b><span style="margin-left:auto">pons v2 · bonding curve</span></div>
         <div class="dec"><strong>Buyback &amp; burn</strong><span class="tag ok">approved</span>
           <small>0.005 ETH · price impact 0.10% · burned on arrival</small></div>
-        <div class="dec"><strong>Creator rewards</strong><span class="tag run">collecting</span>
-          <small>0.0034 ETH claimable in the fee escrow → buy &amp; burn</small></div>
+        <div class="dec"><strong>Dip buying</strong><span class="tag run">watching</span>
+          <small>buys 0.01 ETH on a 12% drop from the 24 h high</small></div>
         <div class="dec"><strong>Scheduled buy</strong><span class="tag wait">in 42 min</span>
           <small>0.002 ETH every 4 h · budget 0.05 ETH remaining</small></div>
         <div class="cap">Illustration · the panel you get after connecting</div>
@@ -289,7 +289,7 @@
 </header>
 
 <div class="strip"><div class="wrap">
-  <div class="stat"><b>6</b><span>functions, on or off with one click</span></div>
+  <div class="stat"><b>5</b><span>functions, on or off with one click</span></div>
   <div class="stat"><b>2</b><span>checks before every action: protocol limits and your own policy</span></div>
   <div class="stat"><b>0</b><span>dependencies — every line that touches a key is in the repo</span></div>
   <div class="stat"><b>v1 + v2</b><span>every pons launch, bonding curve included</span></div>
@@ -297,7 +297,7 @@
 
 <section id="functions"><div class="wrap">
   <div class="lbl">Functions</div>
-  <h2>Six ways to keep your chart honest</h2>
+  <h2>Five ways to keep your chart honest</h2>
   <p class="sub">Turn on only what you need. Every function clears two checks before it becomes an
      action: the protocol's own limits, and the risk policy you set yourself.</p>
   <div class="grid">
@@ -307,13 +307,6 @@
       <p>A standing bid under your token. The agent buys — on the bonding curve or in the pool —
          and sends straight to the burn address, so circulating supply only goes one way.</p>
       <span class="tag2">your deposit</span>
-    </div>
-    <div class="card">
-      <div class="ic"><svg viewBox="0 0 24 24"><path d="M4 14l4-4 4 4 5-6"/><path d="M14 8h3v3"/><path d="M4 20h16"/></svg></div>
-      <h3>Creator rewards → burn</h3>
-      <p>The one that pays for itself. Your creator fees collect themselves and come back as buy
-         pressure — funded entirely by fees you already earned. One signature to enable.</p>
-      <span class="tag2">launch wallet · one signature</span>
     </div>
     <div class="card">
       <div class="ic"><svg viewBox="0 0 24 24"><circle cx="12" cy="12" r="8"/><path d="M12 8v4l3 2"/></svg></div>
@@ -363,13 +356,13 @@
     </div>
     <div class="step">
       <h3>Fund it</h3>
-      <p>Deposit only what you are willing to put to work, and withdraw it any time. If the token
-         is yours, one extra signature also points your creator rewards at the agent.</p>
+      <p>Send ETH to the agent's wallet — only what you are willing to put to work — and withdraw
+         it any time. That is the whole setup.</p>
     </div>
     <div class="step">
       <h3>Pick your functions and watch</h3>
-      <p>Every proposal shows the reasoning, the price impact and the verdict from both checks.
-         On the default setting, nothing moves without your approval.</p>
+      <p>Turn on the functions you want with the amounts you want, press start, and the agent
+         runs them. Every action is simulated before it is sent, and every one is logged.</p>
     </div>
   </div>
 </div></section>
@@ -377,16 +370,16 @@
 <section id="v2"><div class="wrap">
   <div class="lbl">Built for pons v2</div>
   <h2>From the bonding curve to the burn address, automatically</h2>
-  <p class="sub">A pons v2 launch trades on a bonding curve and pays its creator through a fee escrow.
-     The agent speaks both, and a v1 token still works exactly as before.</p>
+  <p class="sub">A pons v2 launch trades on a bonding curve before it graduates. The agent buys straight
+     from the curve, at the price the contract itself quotes, and a v1 token still works exactly as before.</p>
   <div class="flow">
-    <div><small>01 · Curve</small><b>Fees accrue on the curve</b><p>Every buy and sell on your launch charges a fee. Part of it is yours.</p></div>
-    <div><small>02 · Escrow</small><b>Swept into the fee escrow</b><p>The agent sweeps the curve and claims your balance — no key of yours involved.</p></div>
-    <div><small>03 · Agent</small><b>Buys on the curve</b><p>One transaction, ETH in, tokens out, at the price the contract itself quotes.</p></div>
+    <div><small>01 · Deposit</small><b>ETH lands in the agent wallet</b><p>Yours, dedicated to this agent, encrypted with your password.</p></div>
+    <div><small>02 · Quote</small><b>The curve is read live</b><p>Reserves, fees and the opening snipe tax — the same arithmetic the contract runs.</p></div>
+    <div><small>03 · Buy</small><b>One transaction on the curve</b><p>ETH in, tokens out. No router, no wrapping, no approvals.</p></div>
     <div><small>04 · Burn</small><b>Sent to 0x…dEaD</b><p>Bought tokens leave circulation. The dashboard shows the real supply.</p></div>
   </div>
-  <p class="note">After graduation a v2 token trades on Uniswap v4. Reward collection keeps working there;
-     buying on the v4 pool is on the roadmap, and until then the agent says so instead of guessing.</p>
+  <p class="note">After graduation a v2 token trades on Uniswap v4. Buying there is on the roadmap, and
+     until it lands the agent says so instead of guessing.</p>
 </div></section>
 
 {{FEE_FLOW}}
@@ -396,7 +389,7 @@
   <h2>Built like something that holds money</h2>
   <p class="sub">The rules below are not settings. They are how the code is written.</p>
   <div class="safety">
-    <div><b>Your key never leaves your wallet</b><p>You sign a message to log in and, if you are the creator, one transaction to delegate rewards. That is all the app ever asks you to sign.</p></div>
+    <div><b>Your key never leaves your wallet</b><p>You sign one plain-text message to log in. That is all the app ever asks you to sign. The agent has its own wallet, funded by you.</p></div>
     <div><b>Nothing is sent without a simulation</b><p>Every transaction runs through the node first. If it would revert, it is not sent and no gas is spent.</p></div>
     <div><b>Withdrawing is always open</b><p>Maintenance mode, live-execution lock, risk policy — none of them apply to taking your own money out.</p></div>
     <div><b>Every fee is on screen before you approve</b><p>The service fee is charged in ETH only, shown per action, and never taken from your tokens. Withdrawals and airdrops are free.</p></div>
@@ -408,7 +401,7 @@
   <h2>Questions people ask before depositing</h2>
   <p class="sub">Short answers. The long ones are in the terms.</p>
   <details><summary>Do I need to be the token's creator?</summary>
-    <p>No. Buybacks, scheduled buys, dip buying and airdrops work for any pons token. Only creator-reward collection needs the creator's signature, because only the creator can hand those fees to the agent.</p></details>
+    <p>No. Everything works for any pons token: send ETH to your agent's wallet, paste the contract, turn the functions on.</p></details>
   <details><summary>Where is the agent's wallet, and who controls it?</summary>
     <p>The agent gets its own wallet, generated on the server and encrypted with a password only you know. You can export the keystore or withdraw everything at any moment. It never has access to your main wallet.</p></details>
   <details><summary>Does anything happen without my approval?</summary>

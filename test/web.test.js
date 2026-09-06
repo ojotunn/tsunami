@@ -61,7 +61,7 @@ test('config pública lista as funções sem exigir login', async () => {
   const { status, body } = await call('GET', '/api/config');
   assert.equal(status, 200);
   assert.equal(body.chain.id, 4663);
-  assert.equal(body.functions.length, 6);
+  assert.equal(body.functions.length, 5);   // rewards do criador fica fora da tela
 });
 
 // A carteira do usuário não conhece a Robinhood Chain por padrão. A página
@@ -82,15 +82,14 @@ test('config traz o que a carteira precisa para adicionar a rede', async () => {
 // Teste estático do front: garante que nenhuma transação sai antes da troca de
 // rede. O front não tem runtime de teste, mas esta ordem é justamente o que
 // falhou na prática, então vale travar por texto.
-test('a página só envia transação depois de garantir a rede', async () => {
+// A página nunca pede à carteira da pessoa que envie transação: a única
+// assinatura é a mensagem de login. Quem transaciona é a carteira do agente,
+// no servidor. Se eth_sendTransaction voltar a aparecer aqui, alguém reabriu
+// um fluxo que foi removido de propósito (delegação de rewards do criador).
+test('a página só pede à carteira a assinatura de login, nunca uma transação', async () => {
   const html = readFileSync(new URL('../src/web/pages/app.html', import.meta.url), 'utf8');
-  const i = html.indexOf('window.sendTx');
-  assert.ok(i > 0, 'sendTx sumiu da página');
-  const send = html.indexOf('eth_sendTransaction', i);
-  assert.ok(send > i, 'eth_sendTransaction sumiu do sendTx');
-  const guard = html.slice(i, send);
-  assert.match(guard, /ensureChain\(/, 'sendTx envia sem garantir a rede antes');
-  assert.match(html, /wallet_addEthereumChain/, 'a página não sabe adicionar a rede na carteira');
+  assert.doesNotMatch(html, /eth_sendTransaction/, 'a página voltou a enviar transação pela carteira do usuário');
+  assert.match(html, /personal_sign/, 'o login por assinatura sumiu');
 });
 
 // ---------------------------------------------------------------- login

@@ -18,7 +18,7 @@ const fakeExplorer = (pages) => async (url) => {
 
 test('a nova função entra no catálogo', () => {
   assert.ok(catalog().some((f) => f.id === 'holder_airdrop'));
-  assert.equal(catalog().length, 6);
+  assert.equal(catalog().length, 5);   // rewards do criador fica fora da tela
 });
 
 test('fetchHolders segue a paginação e ordena por saldo', async () => {

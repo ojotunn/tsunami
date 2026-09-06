@@ -15,7 +15,8 @@ export const FUNCTIONS = {
   [holderAirdrop.spec.id]: holderAirdrop,
 };
 
-export const catalog = () => Object.values(FUNCTIONS).map((m) => m.spec);
+/** O que a tela oferece. Modulos `hidden` continuam registrados (agentes antigos, API), so nao aparecem. */
+export const catalog = () => Object.values(FUNCTIONS).map((m) => m.spec).filter((s) => !s.hidden);
 
 /** Preenche os defaults do spec e valida os tipos do que o usuário mandou. */
 export function normalizeParams(functionId, input = {}) {

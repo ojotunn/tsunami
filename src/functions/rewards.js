@@ -30,6 +30,11 @@ export const spec = {
   description: 'Collects creator rewards, holds them in reserve, and after graduation puts 100% into buy and burn.',
   needsCapital: false,
   needsDelegation: true,
+  // Fora da tela. Coletar rewards de criador exige a assinatura do criador
+  // (regra do contrato da pons), e o produto e objetivo: manda ETH para o
+  // agente, liga as funcoes, ele executa. O modulo fica para a API e para
+  // agentes que ja tinham a funcao ligada; so nao e oferecido.
+  hidden: true,
   params: {
     mode: { type: 'enum', options: ['reserve_until_graduation', 'burn_immediately', 'collect_only'], default: 'reserve_until_graduation', label: 'What to do with rewards' },
     deployPercent: { type: 'int', default: 100, label: '% of rewards spent on buyback' },

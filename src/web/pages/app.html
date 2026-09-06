@@ -154,14 +154,6 @@
       <div id="agentInfo"></div>
     </div>
 
-    <div class="card">
-      <h2>Delegate creator rewards</h2>
-      <p style="font-size:12px;color:var(--dim)">
-        One signature points your creator payout at the agent. Revert it whenever you want.
-      </p>
-      <button class="ghost" id="delegBtn" style="margin-top:12px">Prepare transaction</button>
-      <div id="delegOut"></div>
-    </div>
   </div>
 
   <div>
@@ -472,7 +464,6 @@ function renderFunctions() {
       <div class="fn-head" onclick="toggleFn('${f.id}')">
         <input type="checkbox" style="width:auto" id="on-${f.id}" onclick="event.stopPropagation()">
         <strong>${esc(f.label)}</strong>
-        ${f.needsDelegation ? '<span class="tag">delegation</span>' : ''}
         ${f.needsCapital ? '<span class="tag">capital</span>' : ''}
       </div>
       <p>${esc(f.description)}</p>
@@ -742,62 +733,6 @@ window.execute = async (id, live) => {
   }
 };
 
-// ---------------------------------------------------------------- delegação
-
-$('delegBtn').onclick = async () => {
-  if (!AGENT) return alert('pick an agent first');
-  try {
-    const d = await api('POST', `/api/agents/${AGENT.id}/delegation`, { token: $('token').value.trim() || undefined });
-    const st = d.status || {};
-    // Cada transação já vem simulada pelo servidor com o endereço conectado.
-    // Só aparece botão de assinar no que de fato passa: oferecer um botão que
-    // sempre reverte é convidar a pessoa a queimar gás para descobrir sozinha.
-    const ti = d.tokenInfo || {};
-    // O endereço inspecionado aparece SEMPRE. Sem ele, "token not found" deixa
-    // no ar a pergunta mais básica: procurado onde, exatamente?
-    const tokenBlock = `
-      <div class="kv"><span>token checked</span><span class="mono">${esc((d.token||'—').slice(0,14))}…</span></div>
-      ${ti.erc20 ? `<div class="kv"><span>token name</span><span>${esc(ti.erc20.symbol || '')} ${esc(ti.erc20.name || '')}</span></div>` : ''}
-      <div class="kv"><span>launched through pons</span><span>${
-        ti.isPonsToken === true ? (ti.version === 'v2' ? 'yes ✓ · v2 (' + esc(ti.v2?.phaseName || 'bonding curve') + ')' : 'yes ✓ · v1') : ti.checked === false ? 'could not check' : 'no'
-      }</span></div>
-      ${ti.verdict ? `<div class="note ${ti.checked === false ? 'warn' : 'bad'}">${esc(ti.verdict)}</div>` : ''}
-      ${ti.note ? `<div class="note warn">${esc(ti.note)}</div>` : ''}`;
-
-    $('delegOut').innerHTML = tokenBlock + `
-      <div class="kv"><span>current payout</span><span class="mono">${esc((st.feeRecipient||'—').slice(0,14))}…</span></div>
-      <div class="kv"><span>connected wallet</span><span class="mono">${esc((d.connected||'—').slice(0,14))}…</span></div>
-      ${st.feeRecipient && d.connected && st.feeRecipient.toLowerCase() !== d.connected.toLowerCase() && !st.redirectedToAgent
-        ? `<div class="note warn">Only the wallet that receives the creator fees can sign this. Log out, connect
-           <span class="mono">${esc(st.feeRecipient)}</span> and come back to this card.</div>` : ''}
-      <div class="kv"><span>points to agent</span><span>${st.redirectedToAgent?'yes ✓':'no'}</span></div>
-      ${st.version === 'v2' && st.pending ? `<div class="kv"><span>claimable in escrow</span><span>${esc(String(Number(st.pending.inEscrow || 0) / 1e18))} ETH</span></div>` : ''}
-      ${d.deployer ? `<div class="kv"><span>token launched by</span><span class="mono">${esc(d.deployer.slice(0,14))}…</span></div>` : ''}
-      ${d.transactions.map((t,i)=>{
-        const sim = t.simulation || {};
-        const cls = sim.ok ? 'note ok' : sim.unknown ? 'note warn' : 'note bad';
-        const verdict = sim.ok
-          ? '<span class="tag ok">simulated: will succeed</span>'
-          : sim.unknown
-            ? '<span class="tag warn">could not check right now</span>'
-            : `<span class="tag bad">will fail${sim.error ? ' · ' + esc(sim.error) : ''}</span>`;
-        // Só o caso comprovadamente ruim ganha o botão de "assinar mesmo assim".
-        // Quando a checagem não completou, o botão normal continua — a carteira
-        // faz a própria simulação antes de você confirmar.
-        const btn = sim.ok || sim.unknown
-          ? `<button class="ghost sm" style="margin-top:8px" onclick="sendTx(${i})">Sign in wallet</button>`
-          : `<button class="ghost sm" style="margin-top:8px" onclick="sendTx(${i}, true)">Sign anyway</button>`;
-        return `
-        <div class="${cls}"><strong>${esc(t.label)}</strong> ${verdict}<br>
-          <span class="mono">${esc(t.signature)}</span><br>
-          <span style="opacity:.8">${esc(sim.ok ? t.note : (sim.reason || t.note))}</span>
-          <br>${btn}
-        </div>`;
-      }).join('')}`;
-    window.__txs = d.transactions;
-  } catch (e) { $('delegOut').innerHTML = `<div class="note bad">${esc(e.message)}</div>`; }
-};
-
 // ---------------------------------------------------- rede da carteira
 //
 // A carteira não conhece a Robinhood Chain por padrão, e `personal_sign` não
@@ -887,28 +822,6 @@ if (window.ethereum?.on) {
   window.ethereum.on('chainChanged', () => renderWalletChain());
   window.ethereum.on('accountsChanged', () => location.reload());
 }
-
-window.sendTx = async (i, knownToFail = false) => {
-  const tx = window.__txs[i];
-  if (!window.ethereum) return alert('no wallet in this browser');
-  if (knownToFail && !confirm(
-    (tx.simulation?.reason || 'This call reverts when simulated.') +
-    '\n\nSigning it will still cost gas and will almost certainly fail. Continue anyway?'
-  )) return;
-  // A troca de rede vem primeiro. Sem isto a MetaMask abre na rede em que o
-  // usuário estiver, e a transação ou falha ou vai parar na chain errada.
-  if (!await ensureChain()) {
-    return alert('Switch your wallet to ' + CONFIG.chain.name + ' (chain ' +
-      CONFIG.chain.id + ') before signing. Nothing was sent.');
-  }
-  try {
-    const hash = await window.ethereum.request({
-      method: 'eth_sendTransaction',
-      params: [{ from: ME, to: tx.to, data: tx.data, chainId: CHAIN_ID_HEX() }],
-    });
-    alert('transaction sent: ' + hash);
-  } catch (e) { alert(e.message || 'transaction rejected'); }
-};
 
 boot().catch((e) => {
   $('chainChip').className = 'chip bad';

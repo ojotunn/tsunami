@@ -50,9 +50,11 @@ const baseCtx = (db, agent, over = {}) => ({
 
 // ---------------------------------------------------------------- registro
 
-test('catálogo expõe as seis funções com parâmetros', () => {
+test('catálogo expõe as cinco funções da tela com parâmetros; rewards fica registrada mas oculta', () => {
   const ids = catalog().map((f) => f.id).sort();
-  assert.deepEqual(ids, ['airdrop', 'buyback_burn', 'dca', 'dip_buy', 'holder_airdrop', 'rewards_boost']);
+  assert.deepEqual(ids, ['airdrop', 'buyback_burn', 'dca', 'dip_buy', 'holder_airdrop']);
+  assert.ok(FUNCTIONS.rewards_boost, 'o módulo continua registrado para agentes antigos e para a API');
+  assert.equal(FUNCTIONS.rewards_boost.spec.hidden, true);
   for (const f of catalog()) {
     assert.ok(f.label && f.description, `${f.id} sem label/description`);
     assert.ok(Object.keys(f.params).length > 0, `${f.id} sem parâmetros`);
