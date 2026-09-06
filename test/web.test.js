@@ -88,7 +88,8 @@ test('config traz o que a carteira precisa para adicionar a rede', async () => {
 // um fluxo que foi removido de propósito (delegação de rewards do criador).
 test('a página só pede à carteira a assinatura de login, nunca uma transação', async () => {
   const html = readFileSync(new URL('../src/web/pages/app.html', import.meta.url), 'utf8');
-  assert.doesNotMatch(html, /eth_sendTransaction/, 'a página voltou a enviar transação pela carteira do usuário');
+  // Procura a CHAMADA, não a palavra: um comentário pode citar o método.
+  assert.doesNotMatch(html, /method:\s*['"]eth_sendTransaction['"]/, 'a página voltou a enviar transação pela carteira do usuário');
   assert.match(html, /personal_sign/, 'o login por assinatura sumiu');
 });
 
