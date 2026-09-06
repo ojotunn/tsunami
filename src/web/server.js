@@ -107,21 +107,24 @@ const SECURITY_HEADERS = {
 // Um aviso que vale ficar registrado aqui: um nome parecido demais com o da
 // pons faz o usuário achar que está no site oficial deles. Como este site pede
 // depósito de fundos, essa confusão custa caro para quem se confunde.
-const BRAND = process.env.PONS_BRAND || 'Blizzard Agents';
+const BRAND = process.env.PONS_BRAND || 'Blizzard AI';
 
 const escapeHtml = (s) => String(s).replace(/[&<>"']/g, (c) => (
   { '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;', "'": '&#39;' }[c]
 ));
 
 /**
- * Marca do logotipo. Com hífen, a segunda parte fica destacada (`pons-mm`);
- * sem hífen, a palavra inteira ganha a cor de destaque, senão um nome de uma
- * palavra só sairia cinza e sem identidade nenhuma.
+ * Marca do logotipo. A última palavra ganha a cor de destaque ("Blizzard AI"
+ * vira Blizzard + AI em ciano); com hífen, a parte depois dele (`pons-mm`).
+ * Um nome de uma palavra só fica inteiro em destaque, senão sairia cinza e
+ * sem identidade nenhuma.
  */
 const brandHtml = () => {
-  const i = BRAND.indexOf('-');
-  return i > 0
-    ? `${escapeHtml(BRAND.slice(0, i))}<span>${escapeHtml(BRAND.slice(i))}</span>`
+  const h = BRAND.indexOf('-');
+  if (h > 0) return `${escapeHtml(BRAND.slice(0, h))}<span>${escapeHtml(BRAND.slice(h))}</span>`;
+  const s = BRAND.lastIndexOf(' ');
+  return s > 0
+    ? `${escapeHtml(BRAND.slice(0, s))}&nbsp;<span>${escapeHtml(BRAND.slice(s + 1))}</span>`
     : `<span>${escapeHtml(BRAND)}</span>`;
 };
 

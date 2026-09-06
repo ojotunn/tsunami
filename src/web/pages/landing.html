@@ -3,71 +3,80 @@
 <head>
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width,initial-scale=1">
-<title>{{BRAND}} · agents for pons tokens</title>
-<meta name="description" content="Agents that run buyback and burn, creator reward collection, scheduled buys, and airdrops for pons tokens on Robinhood Chain.">
+<title>{{BRAND}} · grow your token in one click</title>
+<meta name="description" content="Every tool your pons token needs to grow — buyback and burn, creator-reward compounding, scheduled buys, dip buying and airdrops — run around the clock by an AI agent you control.">
+<meta property="og:title" content="{{BRAND}} — grow your token in one click">
+<meta property="og:description" content="AI agents for pons tokens on Robinhood Chain. Buyback and burn, creator rewards, scheduled buys, airdrops. No private key, ever.">
+<meta property="og:image" content="/assets/brand-512.png?v={{ASSETS_V}}">
 <link rel="icon" href="/assets/brand-32.png?v={{ASSETS_V}}" sizes="32x32">
 <link rel="apple-touch-icon" href="/assets/brand-180.png?v={{ASSETS_V}}">
 <style>
   :root{
-    /* O fundo e o mesmo preto do arquivo da marca (#000100). Isso importa: o
-       PNG tem fundo preto gravado, entao so nesse tom exato a moldura some e o
-       simbolo parece flutuar em vez de vir dentro de um quadrado. */
-    --bg:#000100; --panel:#0a0f16; --panel-2:#101821; --line:#1b2735;
-    --tx:#e9f2fa; --dim:#8b9cb0; --ok:#3fb950; --warn:#e3b341; --bad:#f85149;
-    /* Ciano medido no proprio arquivo da marca, ao longo do degrade: o brilho
-       das pontas das setas, o tom dominante do corpo, e o azul do fundo delas. */
-    --accent:#5FC9E2; --accent-hi:#86F1FD; --accent-lo:#2E86B4;
-    --grad:linear-gradient(135deg,#86F1FD,#2E86B4);
+    --bg:#070B13; --bg-2:#0A1120; --panel:#0E1626; --panel-2:#121C2F; --line:#1B2842;
+    --tx:#EAF2FF; --dim:#8DA0BD; --ok:#3fb950; --warn:#e3b341; --bad:#f85149;
+    /* Os tres pontos do degrade da marca, os mesmos do arquivo SVG. */
+    --hi:#62EDFF; --accent:#22B4FF; --lo:#0B5FEE;
+    --grad:linear-gradient(135deg,var(--hi),var(--accent) 50%,var(--lo));
   }
   *{box-sizing:border-box;margin:0;padding:0}
+  html{scroll-behavior:smooth}
   body{background:var(--bg);color:var(--tx);
-       font:16px/1.65 ui-sans-serif,-apple-system,"Segoe UI",Roboto,sans-serif;
+       font:16px/1.65 ui-sans-serif,-apple-system,"Segoe UI",Inter,Roboto,sans-serif;
        -webkit-font-smoothing:antialiased;overflow-x:hidden}
   a{color:var(--accent);text-decoration:none}
-  .wrap{max-width:1060px;margin:0 auto;padding:0 24px}
+  .wrap{max-width:1120px;margin:0 auto;padding:0 24px}
+  .grad-text{background:var(--grad);-webkit-background-clip:text;background-clip:text;color:transparent}
 
-  nav{border-bottom:1px solid var(--line);position:sticky;top:0;
-      background:rgba(0,2,1,.86);backdrop-filter:blur(8px);z-index:10}
-  nav .wrap{display:flex;align-items:center;gap:18px;height:64px}
-  .brand{display:flex;align-items:center;gap:10px;font-weight:700;
-         letter-spacing:-.02em;font-size:17px}
-  .brand img{width:26px;height:26px;display:block}
+  /* --- navegacao ---------------------------------------------------------- */
+  nav{position:sticky;top:0;z-index:10;border-bottom:1px solid var(--line);
+      background:rgba(7,11,19,.8);backdrop-filter:blur(12px)}
+  nav .wrap{display:flex;align-items:center;gap:26px;height:68px}
+  .brand{display:flex;align-items:center;gap:11px;font-weight:800;letter-spacing:.01em;
+         font-size:18px;text-transform:uppercase;color:var(--tx)}
+  .brand img{width:30px;height:30px;display:block}
   .brand span{color:var(--accent)}
+  nav .links{display:flex;gap:22px;font-size:14px}
+  nav .links a{color:var(--dim)} nav .links a:hover{color:var(--tx)}
   nav .sp{flex:1}
-  .btn{background:var(--grad);color:#00171c;border:0;border-radius:8px;padding:10px 18px;
-       font:inherit;font-size:14px;font-weight:650;cursor:pointer;display:inline-block}
-  /* color-mix em vez de hex com alfa: assim o contorno acompanha a variavel e
-     nao volta a ficar preso na cor de uma marca antiga. */
-  .btn.ghost{background:transparent;color:var(--accent);font-weight:550;
-             border:1px solid color-mix(in srgb, var(--accent) 34%, transparent)}
+  .btn{background:var(--grad);color:#02111f;border:0;border-radius:10px;padding:11px 20px;
+       font:inherit;font-size:14px;font-weight:700;cursor:pointer;display:inline-flex;white-space:nowrap;
+       align-items:center;gap:8px;box-shadow:0 8px 30px -10px rgba(34,180,255,.55);
+       transition:transform .15s,box-shadow .15s}
+  .btn:hover{transform:translateY(-1px);box-shadow:0 12px 34px -10px rgba(34,180,255,.7)}
+  .btn.ghost{background:transparent;color:var(--tx);font-weight:600;box-shadow:none;
+             border:1px solid var(--line)}
+  .btn.ghost:hover{border-color:var(--accent);color:var(--accent)}
 
-  /* --- heroi editorial ---------------------------------------------------
-     A marca sangra pela direita em baixa opacidade e funciona como cenario, nao
-     como ilustracao. O texto ocupa a esquerda e nunca passa por cima dela. */
-  header{position:relative;padding:96px 0 78px;border-bottom:1px solid var(--line);
-         overflow:hidden}
-  /* Fundo em CSS e nao <img> de proposito: no celular esta marca some, e o
-     navegador NAO busca background de elemento com display:none — mas busca a
-     imagem de um <img> escondido. Sao 260 kB que o celular deixa de baixar
-     para ver algo que nem aparece na tela dele. */
-  .bleed{position:absolute;right:-90px;top:-40px;width:520px;height:520px;
-         background:url('/assets/brand-512.png?v={{ASSETS_V}}') center/contain no-repeat;
-         opacity:.17;pointer-events:none;user-select:none}
-  header .wrap{position:relative;z-index:1}
-  .hero{max-width:62%}
-  .rule{width:44px;height:3px;background:var(--grad);border-radius:2px;margin-bottom:20px}
-  h1{font-size:clamp(46px,11vw,92px);line-height:1;letter-spacing:.02em;
-     font-weight:800;margin-bottom:18px}
-  h1 em{font-style:normal;color:var(--accent)}
-  .lead{font-size:18px;color:var(--dim);max-width:52ch;margin-bottom:28px}
-  .cta{display:flex;gap:12px;flex-wrap:wrap;align-items:center}
-  .cta small{color:var(--dim);font-size:13px}
+  /* --- heroi -------------------------------------------------------------- */
+  header{position:relative;padding:92px 0 84px;overflow:hidden;
+         background:
+           radial-gradient(900px 520px at 78% 30%,rgba(34,180,255,.16),transparent 60%),
+           radial-gradient(600px 400px at 10% 90%,rgba(11,95,238,.14),transparent 60%),
+           var(--bg)}
+  header::after{content:"";position:absolute;inset:0;pointer-events:none;
+    background-image:linear-gradient(rgba(255,255,255,.035) 1px,transparent 1px),
+                     linear-gradient(90deg,rgba(255,255,255,.035) 1px,transparent 1px);
+    background-size:48px 48px;mask-image:radial-gradient(70% 70% at 50% 40%,#000,transparent)}
+  header .wrap{position:relative;z-index:1;display:grid;grid-template-columns:1.1fr .9fr;
+               gap:48px;align-items:center}
+  .eyebrow{display:inline-flex;align-items:center;gap:9px;font-size:12px;font-weight:600;
+    letter-spacing:.12em;text-transform:uppercase;color:var(--accent);margin-bottom:22px;
+    padding:6px 12px;border:1px solid rgba(34,180,255,.3);border-radius:999px;
+    background:rgba(34,180,255,.07)}
+  .eyebrow i{width:6px;height:6px;border-radius:50%;background:var(--accent);
+    box-shadow:0 0 10px var(--accent)}
+  h1{font-size:clamp(40px,6vw,64px);line-height:1.04;letter-spacing:-.025em;font-weight:800;
+     margin-bottom:20px}
+  .lead{font-size:18px;color:var(--dim);max-width:52ch;margin-bottom:30px}
+  .cta{display:flex;gap:12px;flex-wrap:wrap;align-items:center;margin-bottom:16px}
+  .trust{color:var(--dim);font-size:13px;display:flex;gap:16px;flex-wrap:wrap}
+  .trust span::before{content:"✓";color:var(--accent);margin-right:6px;font-weight:700}
 
   /* Contrato do token da instancia. So aparece quando PONS_SITE_TOKEN existe. */
   .token-badge{display:inline-flex;align-items:center;gap:10px;flex-wrap:wrap;
     margin-top:26px;padding:9px 14px;border:1px solid var(--line);
     border-radius:999px;background:var(--panel)}
-  .tb-name{font-size:12px;font-weight:700;letter-spacing:.04em;text-transform:uppercase;
+  .tb-name{font-size:12px;font-weight:700;letter-spacing:.06em;text-transform:uppercase;
     color:var(--accent)}
   .tb-addr{font:13px/1 ui-monospace,SFMono-Regular,Menlo,monospace;color:var(--tx);
     word-break:break-all}
@@ -76,141 +85,327 @@
     text-decoration:none}
   .tb-btn:hover{color:var(--tx);border-color:var(--dim)}
 
-  /* --- secoes numeradas --------------------------------------------------- */
-  section{padding:72px 0;border-bottom:1px solid var(--line)}
-  .lbl{display:flex;align-items:baseline;gap:12px;margin-bottom:10px}
-  .num{font:700 13px/1 ui-monospace,SFMono-Regular,Menlo,monospace;color:var(--accent);
-       letter-spacing:.08em}
-  h2{font-size:26px;letter-spacing:-.02em;font-weight:650}
-  .sub{color:var(--dim);margin-bottom:34px;max-width:62ch}
+  /* Painel do produto: uma foto do que o agente faz, em HTML, para a pagina
+     abrir rapido e continuar nitida em qualquer tela. */
+  .visual{position:relative;min-height:440px}
+  .visual .crystal{position:absolute;right:-30px;top:-40px;width:420px;height:420px;
+    opacity:.22;filter:blur(.2px);pointer-events:none;user-select:none;
+    background:url('/assets/brand-512.png?v={{ASSETS_V}}') center/contain no-repeat}
+  .panel{position:relative;background:linear-gradient(180deg,var(--panel-2),var(--panel));
+    border:1px solid var(--line);border-radius:16px;padding:18px 18px 14px;
+    box-shadow:0 30px 80px -30px rgba(0,0,0,.8),0 0 0 1px rgba(34,180,255,.06) inset;
+    max-width:440px;margin-left:auto;margin-top:36px}
+  .panel .ph{display:flex;align-items:center;gap:10px;font-size:12px;color:var(--dim);
+    letter-spacing:.08em;text-transform:uppercase;margin-bottom:14px}
+  .panel .ph i{width:8px;height:8px;border-radius:50%;background:var(--ok);
+    box-shadow:0 0 10px var(--ok)}
+  .panel .ph b{color:var(--tx);letter-spacing:0;text-transform:none;font-size:13px}
+  .dec{display:grid;grid-template-columns:1fr auto;gap:4px 12px;align-items:center;
+    padding:11px 12px;border:1px solid var(--line);border-radius:10px;margin-bottom:8px;
+    background:rgba(7,11,19,.5)}
+  /* Colunas explicitas: um item com linha fixa e coluna automatica e colocado
+     ANTES dos automaticos, e o selo ia parar na primeira coluna, a esquerda do titulo. */
+  .dec strong{grid-column:1;grid-row:1;font-size:13.5px;font-weight:650}
+  .dec small{grid-column:1;grid-row:2;color:var(--dim);font-size:12px}
+  .dec .tag{grid-column:2;grid-row:1/3;font-size:11px;font-weight:700;padding:3px 9px;border-radius:999px;
+    letter-spacing:.04em;text-transform:uppercase}
+  .tag.ok{background:rgba(63,185,80,.14);color:var(--ok)}
+  .tag.run{background:rgba(34,180,255,.14);color:var(--accent)}
+  .tag.wait{background:rgba(141,160,189,.14);color:var(--dim)}
+  .kpis{display:grid;grid-template-columns:repeat(3,1fr);gap:8px;margin-top:12px}
+  .kpi{padding:10px 12px;border-radius:10px;background:rgba(7,11,19,.5);border:1px solid var(--line)}
+  .kpi small{display:block;color:var(--dim);font-size:11px;letter-spacing:.06em;text-transform:uppercase}
+  .kpi b{font-size:15px;font-weight:700;font-variant-numeric:tabular-nums}
+  .kpi b.up{color:var(--ok)}
 
-  .grid{display:grid;grid-template-columns:repeat(auto-fit,minmax(250px,1fr));gap:18px}
-  .card{border-left:2px solid var(--line);padding:2px 0 2px 18px;transition:border-color .18s}
-  .card:hover{border-left-color:var(--accent)}
-  .card h3{font-size:16px;margin-bottom:8px;font-weight:620}
-  .card p{color:var(--dim);font-size:14px}
-  .card .tag{display:inline-block;font-size:11px;color:var(--dim);background:var(--panel);
-             border:1px solid var(--line);border-radius:999px;padding:2px 9px;margin-top:12px}
+  /* --- faixa de numeros --------------------------------------------------- */
+  .strip{border-top:1px solid var(--line);border-bottom:1px solid var(--line);
+         background:var(--bg-2)}
+  .strip .wrap{display:grid;grid-template-columns:repeat(auto-fit,minmax(200px,1fr));
+               gap:0}
+  .stat{padding:26px 20px;border-right:1px solid var(--line)}
+  .stat:last-child{border-right:0}
+  .stat b{display:block;font-size:30px;font-weight:800;letter-spacing:-.02em;line-height:1.1}
+  .stat span{color:var(--dim);font-size:13px}
 
-  .steps{counter-reset:s;display:grid;gap:20px;
-         grid-template-columns:repeat(auto-fit,minmax(230px,1fr))}
-  .step{border-top:1px solid var(--line);padding-top:16px}
+  /* --- secoes ------------------------------------------------------------- */
+  section{padding:88px 0;border-bottom:1px solid var(--line)}
+  section.alt{background:var(--bg-2)}
+  .lbl{font-size:12px;font-weight:700;letter-spacing:.14em;text-transform:uppercase;
+       color:var(--accent);margin-bottom:12px}
+  h2{font-size:clamp(28px,3.4vw,38px);letter-spacing:-.025em;font-weight:800;line-height:1.12}
+  .sub{color:var(--dim);margin:14px 0 40px;max-width:64ch;font-size:17px}
+
+  .grid{display:grid;grid-template-columns:repeat(auto-fit,minmax(300px,1fr));gap:16px}
+  .card{background:var(--panel);border:1px solid var(--line);border-radius:14px;padding:22px;
+        transition:border-color .18s,transform .18s;position:relative;overflow:hidden}
+  .card:hover{border-color:rgba(34,180,255,.45);transform:translateY(-2px)}
+  .card .ic{width:40px;height:40px;border-radius:10px;display:grid;place-items:center;
+    background:rgba(34,180,255,.1);border:1px solid rgba(34,180,255,.25);margin-bottom:16px}
+  .card .ic svg{width:20px;height:20px;stroke:var(--hi);fill:none;stroke-width:1.8;
+    stroke-linecap:round;stroke-linejoin:round}
+  .card h3{font-size:17px;margin-bottom:8px;font-weight:700;letter-spacing:-.01em}
+  .card p{color:var(--dim);font-size:14.5px}
+  .card .tag2{display:inline-block;font-size:11px;font-weight:600;letter-spacing:.06em;
+    text-transform:uppercase;color:var(--dim);border:1px solid var(--line);border-radius:999px;
+    padding:3px 10px;margin-top:16px}
+
+  .steps{counter-reset:s;display:grid;gap:16px;
+         grid-template-columns:repeat(auto-fit,minmax(240px,1fr))}
+  .step{background:var(--panel);border:1px solid var(--line);border-radius:14px;padding:22px}
   .step::before{counter-increment:s;content:"0" counter(s);
-    font:700 12px/1 ui-monospace,SFMono-Regular,Menlo,monospace;color:var(--accent);
-    display:block;margin-bottom:9px;letter-spacing:.08em}
-  .step h3{font-size:15px;margin-bottom:5px}
+    font:800 13px/1 ui-monospace,SFMono-Regular,Menlo,monospace;
+    display:inline-block;padding:6px 9px;border-radius:8px;margin-bottom:14px;
+    background:var(--grad);color:#02111f;letter-spacing:.06em}
+  .step h3{font-size:16px;margin-bottom:6px;font-weight:700}
   .step p{color:var(--dim);font-size:14px}
 
-  footer{padding:48px 0 64px;color:var(--dim);font-size:13px}
-  footer p{max-width:70ch;margin-bottom:10px}
+  /* --- pons v2: o fluxo do dinheiro --------------------------------------- */
+  .flow{display:grid;grid-template-columns:repeat(4,1fr);gap:0;align-items:stretch;
+        border:1px solid var(--line);border-radius:16px;overflow:hidden;background:var(--panel)}
+  .flow div{padding:22px;border-right:1px solid var(--line);position:relative}
+  .flow div:last-child{border-right:0}
+  .flow div::after{content:"→";position:absolute;right:-9px;top:50%;transform:translateY(-50%);
+    width:18px;height:18px;border-radius:50%;background:var(--bg);border:1px solid var(--line);
+    font-size:11px;line-height:16px;text-align:center;color:var(--accent);z-index:1}
+  .flow div:last-child::after{display:none}
+  .flow small{display:block;color:var(--accent);font-size:11px;font-weight:700;
+    letter-spacing:.12em;text-transform:uppercase;margin-bottom:8px}
+  .flow b{display:block;font-size:15px;margin-bottom:6px}
+  .flow p{color:var(--dim);font-size:13px}
+  .note{margin-top:18px;color:var(--dim);font-size:14px;border-left:2px solid var(--accent);
+        padding-left:14px;max-width:70ch}
 
-  /* No celular a marca de fundo sai de cena: com o texto ocupando a largura
-     toda, ela passaria por tras das letras e atrapalharia a leitura. */
+  .safety{display:grid;grid-template-columns:repeat(auto-fit,minmax(260px,1fr));gap:16px}
+  .safety div{padding:20px;border:1px solid var(--line);border-radius:14px;background:var(--panel)}
+  .safety b{display:block;margin-bottom:6px;font-size:15px}
+  .safety p{color:var(--dim);font-size:14px}
+
+  details{border:1px solid var(--line);border-radius:12px;background:var(--panel);
+          padding:0 20px;margin-bottom:10px}
+  summary{cursor:pointer;padding:16px 0;font-weight:650;list-style:none;display:flex;
+          justify-content:space-between;gap:12px}
+  summary::-webkit-details-marker{display:none}
+  summary::after{content:"+";color:var(--accent);font-weight:700}
+  details[open] summary::after{content:"−"}
+  details p{color:var(--dim);font-size:14.5px;padding:0 0 18px;max-width:78ch}
+
+  .final{text-align:center;padding:96px 0}
+  .final h2{margin-bottom:14px}
+  .final .cta{justify-content:center}
+
+  footer{padding:48px 0 64px;color:var(--dim);font-size:13px}
+  footer p{max-width:78ch;margin-bottom:10px}
+  footer .links a{margin-right:14px}
+
+  @media (max-width:900px){
+    header .wrap{grid-template-columns:1fr}
+    .visual{min-height:0}
+    .visual .crystal{display:none}
+    .panel{margin-left:0;margin-top:8px;max-width:100%}
+    .flow{grid-template-columns:1fr}
+    .flow div{border-right:0;border-bottom:1px solid var(--line)}
+    .flow div::after{display:none}
+    nav .links{display:none}
+    nav .btn{padding:9px 14px;font-size:13px}
+  }
   @media (max-width:760px){
-    .hero{max-width:100%}
-    .bleed{display:none}
-    header{padding:64px 0 56px}
-    section{padding:54px 0}
+    header{padding:60px 0 56px}
+    section{padding:60px 0}
+    .stat{border-right:0;border-bottom:1px solid var(--line)}
   }
 </style>
 </head>
 <body>
 
 <nav><div class="wrap">
-  <div class="brand"><img src="/assets/brand-64.png?v={{ASSETS_V}}" alt="" width="26" height="26">{{BRAND_HTML}}</div>
-  <a href="#features" style="color:var(--dim);font-size:14px">features</a>
+  <a class="brand" href="/"><img src="/assets/brand-64.png?v={{ASSETS_V}}" alt="" width="30" height="30">{{BRAND_HTML}}</a>
+  <div class="links">
+    <a href="#functions">Functions</a>
+    <a href="#how">How it works</a>
+    <a href="#v2">pons v2</a>
+    <a href="#safety">Safety</a>
+    <a href="#faq">FAQ</a>
+  </div>
   <div class="sp"></div>
   <a class="btn" href="/app">Open the app</a>
 </div></nav>
 
 <header>
-  <div class="bleed" aria-hidden="true"></div>
-  <div class="wrap"><div class="hero">
-    <div class="rule"></div>
-    <h1>BLIZZARD</h1>
-    <p class="lead">
-      Blizzard brings functions that exist on pump.fun to Robinhood Chain,
-      through automated AI agents.
-    </p>
-    <div class="cta">
-      <a class="btn" href="/app">Launch your agent</a>
-      <small>Sign in with your wallet. No password, no signup, no private key.</small>
+  <div class="wrap">
+    <div>
+      <div class="eyebrow"><i></i>AI agents for pons tokens · Robinhood Chain</div>
+      <h1>Every tool your token needs to grow. <span class="grad-text">One click.</span></h1>
+      <p class="lead">
+        Buyback and burn, creator-reward compounding, scheduled buys, dip buying and airdrops —
+        run around the clock by an AI agent you control from a single panel.
+      </p>
+      <div class="cta">
+        <a class="btn" href="/app">Launch your agent →</a>
+        <a class="btn ghost" href="#how">See how it works</a>
+      </div>
+      <div class="trust">
+        <span>No private key, ever</span>
+        <span>Withdraw any time</span>
+        <span>Every action simulated first</span>
+      </div>
+      {{TOKEN_BADGE}}
     </div>
-    {{TOKEN_BADGE}}
-  </div></div>
+
+    <div class="visual" aria-hidden="true">
+      <div class="crystal"></div>
+      <div class="panel">
+        <div class="ph"><i></i><b>Agent · live</b><span style="margin-left:auto">pons v2 · bonding curve</span></div>
+        <div class="dec"><strong>Buyback &amp; burn</strong><span class="tag ok">approved</span>
+          <small>0.005 ETH · price impact 0.10% · burned on arrival</small></div>
+        <div class="dec"><strong>Creator rewards</strong><span class="tag run">collecting</span>
+          <small>0.0034 ETH claimable in the fee escrow → buy &amp; burn</small></div>
+        <div class="dec"><strong>Scheduled buy</strong><span class="tag wait">in 42 min</span>
+          <small>0.002 ETH every 4 h · budget 0.05 ETH remaining</small></div>
+        <div class="kpis">
+          <div class="kpi"><small>Price</small><b>1.85 gwei</b></div>
+          <div class="kpi"><small>Burned</small><b class="up">2.31%</b></div>
+          <div class="kpi"><small>Graduation</small><b>2.0%</b></div>
+        </div>
+      </div>
+    </div>
+  </div>
 </header>
 
-<section id="features"><div class="wrap">
-  <div class="lbl"><span class="num">01</span><h2>Six ways to keep your chart honest</h2></div>
-  <p class="sub">Turn on only what you need. Every function clears two checks before it becomes
-     an action: the protocol's own limits, and the risk policy you set yourself.</p>
+<div class="strip"><div class="wrap">
+  <div class="stat"><b>6</b><span>functions, on or off with one click</span></div>
+  <div class="stat"><b>2</b><span>checks before every action: protocol limits and your own policy</span></div>
+  <div class="stat"><b>0</b><span>dependencies — every line that touches a key is in the repo</span></div>
+  <div class="stat"><b>v1 + v2</b><span>every pons launch, bonding curve included</span></div>
+</div></div>
+
+<section id="functions"><div class="wrap">
+  <div class="lbl">Functions</div>
+  <h2>Six ways to keep your chart honest</h2>
+  <p class="sub">Turn on only what you need. Every function clears two checks before it becomes an
+     action: the protocol's own limits, and the risk policy you set yourself.</p>
   <div class="grid">
     <div class="card">
+      <div class="ic"><svg viewBox="0 0 24 24"><path d="M12 3c2 4 6 6 6 11a6 6 0 0 1-12 0c0-2 1-3 2-4 0 2 1 3 2 3 0-4 1-7 2-10z"/></svg></div>
       <h3>Buyback &amp; burn</h3>
-      <p>A standing bid under any pons token. The agent buys from the pool and sends straight
-         to the burn address, so the supply in circulation only goes one way.</p>
-      <span class="tag">your deposit</span>
+      <p>A standing bid under your token. The agent buys — on the bonding curve or in the pool —
+         and sends straight to the burn address, so circulating supply only goes one way.</p>
+      <span class="tag2">your deposit</span>
     </div>
     <div class="card">
+      <div class="ic"><svg viewBox="0 0 24 24"><path d="M4 14l4-4 4 4 5-6"/><path d="M14 8h3v3"/><path d="M4 20h16"/></svg></div>
       <h3>Creator rewards → burn</h3>
-      <p>The one that pays for itself. Your rewards collect themselves, wait in reserve, and
-         after graduation come back as buy pressure — funded entirely by fees you already earned.</p>
-      <span class="tag">launch wallet · one signature</span>
+      <p>The one that pays for itself. Your creator fees collect themselves and come back as buy
+         pressure — funded entirely by fees you already earned. One signature to enable.</p>
+      <span class="tag2">launch wallet · one signature</span>
     </div>
     <div class="card">
+      <div class="ic"><svg viewBox="0 0 24 24"><circle cx="12" cy="12" r="8"/><path d="M12 8v4l3 2"/></svg></div>
       <h3>Scheduled buys</h3>
       <p>A fixed amount on the interval you choose, with a hard budget and a per-order impact
-         cap. The panel tells you upfront what that cadence costs you in pool fees for a year.</p>
-      <span class="tag">your deposit</span>
+         cap. The panel tells you upfront what that cadence costs in fees for a year.</p>
+      <span class="tag2">your deposit</span>
     </div>
     <div class="card">
+      <div class="ic"><svg viewBox="0 0 24 24"><path d="M4 6l5 7 3-3 4 5 4-4"/><path d="M16 11h4v4"/></svg></div>
       <h3>Dip buying</h3>
-      <p>Be the bid when everyone else is asleep. Triggers on a fall from the recent high —
-         not from the last price — so ordinary noise never spends your money.</p>
-      <span class="tag">your deposit</span>
+      <p>Be the bid when everyone else is asleep. Triggers on a fall from the recent high — not
+         from the last price — so ordinary noise never spends your money.</p>
+      <span class="tag2">your deposit</span>
     </div>
     <div class="card">
+      <div class="ic"><svg viewBox="0 0 24 24"><path d="M12 4v10"/><path d="M8 10l4 4 4-4"/><path d="M5 19h14"/></svg></div>
       <h3>Airdrops that reach real people</h3>
       <p>Send to your own list, or straight to your actual on-chain holders read live from the
-         explorer. Addresses, duplicates and the per-wallet cap are all checked before anything moves.</p>
-      <span class="tag">your tokens</span>
+         chain. Addresses, duplicates and the per-wallet cap are checked before anything moves.</p>
+      <span class="tag2">your tokens</span>
     </div>
     <div class="card">
+      <div class="ic"><svg viewBox="0 0 24 24"><rect x="4" y="5" width="16" height="14" rx="2"/><path d="M8 13l2-2 2 2 3-4"/></svg></div>
       <h3>Dashboard and audit trail</h3>
       <p>Price, liquidity, graduation progress, real circulating supply, and every decision the
          agent ever proposed — including the ones your own rules blocked.</p>
-      <span class="tag">read only</span>
+      <span class="tag2">read only</span>
     </div>
   </div>
 </div></section>
 
-<section><div class="wrap">
-  <div class="lbl"><span class="num">02</span><h2>Running in under five minutes</h2></div>
+<section id="how" class="alt"><div class="wrap">
+  <div class="lbl">How it works</div>
+  <h2>Running in under five minutes</h2>
   <p class="sub">Four steps. Not one of them asks for your private key.</p>
   <div class="steps">
     <div class="step">
       <h3>Connect any wallet</h3>
-      <p>You sign a plain text message to prove the address is yours. Signing moves no funds
-         and authorizes no transaction. You do not need to be the token's creator — that
-         only matters for collecting creator rewards.</p>
+      <p>Sign a plain-text message to prove the address is yours. Signing moves no funds and
+         authorizes no transaction. You do not need to be the token's creator.</p>
     </div>
     <div class="step">
       <h3>Point it at a token</h3>
-      <p>Paste the contract address of any token launched on pons — yours or not. You get a
-         brand new, dedicated wallet for the agent, encrypted with your own password. It can
-         only ever move what you send to it, never your main wallet.</p>
+      <p>Paste the contract of any pons token — yours or not. You get a brand-new dedicated
+         wallet for the agent, encrypted with your own password. It can only move what you send it.</p>
     </div>
     <div class="step">
       <h3>Fund it</h3>
-      <p>Deposit only what you are willing to put to work — and withdraw it any time. If the
-         token is yours, one extra signature also points your creator rewards at the agent.</p>
+      <p>Deposit only what you are willing to put to work, and withdraw it any time. If the token
+         is yours, one extra signature also points your creator rewards at the agent.</p>
     </div>
     <div class="step">
       <h3>Pick your functions and watch</h3>
-      <p>Every proposal shows the reasoning, the price impact, and the verdict from both
-         checks. On the default setting, nothing moves without your approval.</p>
+      <p>Every proposal shows the reasoning, the price impact and the verdict from both checks.
+         On the default setting, nothing moves without your approval.</p>
     </div>
   </div>
+</div></section>
+
+<section id="v2"><div class="wrap">
+  <div class="lbl">Built for pons v2</div>
+  <h2>From the bonding curve to the burn address, automatically</h2>
+  <p class="sub">A pons v2 launch trades on a bonding curve and pays its creator through a fee escrow.
+     The agent speaks both, and a v1 token still works exactly as before.</p>
+  <div class="flow">
+    <div><small>01 · Curve</small><b>Fees accrue on the curve</b><p>Every buy and sell on your launch charges a fee. Part of it is yours.</p></div>
+    <div><small>02 · Escrow</small><b>Swept into the fee escrow</b><p>The agent sweeps the curve and claims your balance — no key of yours involved.</p></div>
+    <div><small>03 · Agent</small><b>Buys on the curve</b><p>One transaction, ETH in, tokens out, at the price the contract itself quotes.</p></div>
+    <div><small>04 · Burn</small><b>Sent to 0x…dEaD</b><p>Bought tokens leave circulation. The dashboard shows the real supply.</p></div>
+  </div>
+  <p class="note">After graduation a v2 token trades on Uniswap v4. Reward collection keeps working there;
+     buying on the v4 pool is on the roadmap, and until then the agent says so instead of guessing.</p>
+</div></section>
+
+<section id="safety" class="alt"><div class="wrap">
+  <div class="lbl">Safety</div>
+  <h2>Built like something that holds money</h2>
+  <p class="sub">The rules below are not settings. They are how the code is written.</p>
+  <div class="safety">
+    <div><b>Your key never leaves your wallet</b><p>You sign a message to log in and, if you are the creator, one transaction to delegate rewards. That is all the app ever asks you to sign.</p></div>
+    <div><b>Nothing is sent without a simulation</b><p>Every transaction runs through the node first. If it would revert, it is not sent and no gas is spent.</p></div>
+    <div><b>Withdrawing is always open</b><p>Maintenance mode, live-execution lock, risk policy — none of them apply to taking your own money out.</p></div>
+    <div><b>Every fee is on screen before you approve</b><p>The service fee is charged in ETH only, shown per action, and never taken from your tokens. Withdrawals and airdrops are free.</p></div>
+  </div>
+</div></section>
+
+<section id="faq"><div class="wrap">
+  <div class="lbl">FAQ</div>
+  <h2>Questions people ask before depositing</h2>
+  <p class="sub">Short answers. The long ones are in the terms.</p>
+  <details><summary>Do I need to be the token's creator?</summary>
+    <p>No. Buybacks, scheduled buys, dip buying and airdrops work for any pons token. Only creator-reward collection needs the creator's signature, because only the creator can hand those fees to the agent.</p></details>
+  <details><summary>Where is the agent's wallet, and who controls it?</summary>
+    <p>The agent gets its own wallet, generated on the server and encrypted with a password only you know. You can export the keystore or withdraw everything at any moment. It never has access to your main wallet.</p></details>
+  <details><summary>Does anything happen without my approval?</summary>
+    <p>By default, no. The agent proposes; you approve. You can raise the auto-approval threshold in the risk policy once you trust it — and lower it back any time.</p></details>
+  <details><summary>Does burning change the total supply?</summary>
+    <p>No. The pons token has no burn function, so burned tokens sit at 0x…dEaD forever. Total supply stays the same; the dashboard reports circulating supply separately so the number you publish holds up.</p></details>
+  <details><summary>What does it cost?</summary>
+    <p>Gas, plus a service fee shown on screen before every action, charged in ETH on what the agent spends or collects. Withdrawing is free.</p></details>
+</div></section>
+
+<section class="final"><div class="wrap">
+  <div class="lbl">Get started</div>
+  <h2>Put your token to work tonight</h2>
+  <p class="sub" style="margin-left:auto;margin-right:auto">Sign in with your wallet, paste a contract address, fund the agent. Five minutes.</p>
+  <div class="cta"><a class="btn" href="/app">Launch your agent →</a></div>
 </div></section>
 
 <footer><div class="wrap">
@@ -222,10 +417,10 @@
      depending on your jurisdiction and volume. Worth talking to a lawyer before you
      scale. If your token runs programmatic buybacks, disclosing that publicly is what
      separates a transparent treasury from a manipulation complaint.</p>
-  <p style="margin-top:18px">{{BRAND}} · open source, zero dependencies ·
+  <p class="links" style="margin-top:18px">{{BRAND}} · open source, zero dependencies ·
      {{SOCIAL}}
-     <a href="/terms">terms and risks</a> ·
-     <a href="https://docs.ponsfamily.com/docs">pons docs</a></p>
+     <a href="/terms">terms and risks</a>
+     <a href="https://docs.ponsfamily.com/docs/v2">pons v2 docs</a></p>
 </div></footer>
 
 </body>

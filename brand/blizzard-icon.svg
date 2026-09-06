@@ -1,0 +1,57 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 512 512" width="512" height="512">
+  <!--
+    Blizzard AI — o cristal.
+    Quatro eixos (vertical, horizontal e as duas diagonais). Os eixos retos
+    sao bracos de floco de neve com ramos a 45 graus e um garfo na ponta, como
+    um circuito que se bifurca; as diagonais sao setas solidas empilhadas, o
+    peso da marca. O apice das setas e agudo de proposito: com 90 graus, uma
+    seta a 45 graus vira um canto reto, e quatro cantos retos desenham um
+    quadrado em volta do centro — foi o que aconteceu na primeira versao.
+    O degrade e UM so, em coordenadas do grupo ja centralizado, para o cristal
+    ler como uma peca unica e nao como quatro bracos pintados separados.
+  -->
+  <defs>
+    <linearGradient id="g" gradientUnits="userSpaceOnUse" x1="-170" y1="-190" x2="170" y2="190">
+      <stop offset="0" stop-color="#62EDFF"/>
+      <stop offset=".5" stop-color="#22B4FF"/>
+      <stop offset="1" stop-color="#0B5FEE"/>
+    </linearGradient>
+
+    <!-- Braco reto, desenhado apontando para cima a partir do centro. -->
+    <g id="arm">
+      <!-- haste -->
+      <rect x="-15" y="-160" width="30" height="122" rx="8"/>
+      <!-- ramos laterais a 45 graus, saindo da haste para fora e para cima -->
+      <rect x="-9" y="-60" width="18" height="60" rx="9" transform="translate(-12 -74) rotate(-45)"/>
+      <rect x="-9" y="-60" width="18" height="60" rx="9" transform="translate(12 -74) rotate(45)"/>
+      <!-- garfo: a haste se bifurca em dois dentes -->
+      <rect x="-34" y="-172" width="68" height="22" rx="8"/>
+      <rect x="-34" y="-212" width="18" height="50" rx="8"/>
+      <rect x="16"  y="-212" width="18" height="50" rx="8"/>
+      <!-- losango na ponta -->
+      <rect x="-18" y="-18" width="36" height="36" rx="5" transform="translate(0 -240) rotate(45)"/>
+    </g>
+
+    <!-- Diagonal: setas solidas empilhadas, apontando para fora (apice de 64 graus). -->
+    <g id="diag">
+      <path d="M-40 -72 L0 -136 L40 -72 L40 -40 L0 -104 L-40 -40 Z" stroke-linejoin="round"/>
+      <path d="M-30 -152 L0 -200 L30 -152 L30 -126 L0 -174 L-30 -126 Z"/>
+      <!-- losango pequeno na ponta: sem rotacao aqui, porque o grupo inteiro ja gira 45 -->
+      <rect x="-12" y="-12" width="24" height="24" rx="4" transform="translate(0 -226)"/>
+    </g>
+  </defs>
+
+  <g fill="url(#g)" transform="translate(256 256)">
+    <circle cx="0" cy="0" r="27"/>
+
+    <use href="#arm"/>
+    <use href="#arm" transform="rotate(90)"/>
+    <use href="#arm" transform="rotate(180)"/>
+    <use href="#arm" transform="rotate(270)"/>
+
+    <use href="#diag" transform="rotate(45)"/>
+    <use href="#diag" transform="rotate(135)"/>
+    <use href="#diag" transform="rotate(225)"/>
+    <use href="#diag" transform="rotate(315)"/>
+  </g>
+</svg>
