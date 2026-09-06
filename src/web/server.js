@@ -25,7 +25,7 @@ import { explainRpcError } from '../chain/errors.js';
 import { inspectToken } from '../chain/token.js';
 import { delegationCallsV2 } from '../chain/v2.js';
 import { formatUnits, parseUnits } from '../market/pricing.js';
-import { validatePolicy } from '../agent/policy.js';
+import { validatePolicy, liftLegacyCaps } from '../agent/policy.js';
 import {
   migrateAuth, issueNonce, verifyLogin, sessionFromToken, logout, loginMessage,
   parseCookies, sessionCookie, clearCookie, assertOwnership, acceptTerms, hasAcceptedTerms,
@@ -46,6 +46,8 @@ import {
 const HERE = dirname(fileURLToPath(import.meta.url));
 const db = openDb();
 migrateAuth(db);
+// Agentes antigos carregam o teto de 0,01 ETH por operação que já não é padrão.
+{ const n = liftLegacyCaps(db); if (n) console.log(`policy: lifted the legacy 0.01 ETH per-trade cap on ${n} agent(s)`); }
 migrateOperator(db);
 const rpc = new RpcClient();
 

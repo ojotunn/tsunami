@@ -1,11 +1,18 @@
 // Política de risco do agente. Tudo que a camada de execução puder fazer
 // precisa passar por aqui primeiro — o agente de IA propõe, a política decide.
 
+// Sem teto de valor por padrão. A pessoa deposita o que quer gastar e o agente
+// gasta; quem quiser um teto coloca na tela da política. Os 0,01 ETH por
+// operação que existiam aqui bloquearam uma compra real de quem tinha
+// depositado mais — e um limite que a pessoa não pediu não é proteção, é
+// tropeço. O que continua protegendo sem pedir licença é a reserva de gás.
+const NO_CAP = (1000n * 10n ** 18n).toString();   // 1000 ETH: na prática, sem teto
+
 export const DEFAULT_POLICY = {
   // --- capital -----------------------------------------------------------
   minFundingWei: '1000000000000000',      // 0.001 ETH mínimo para ativar
-  maxNotionalPerTradeWei: '10000000000000000',  // 0.01 ETH por operação
-  maxDailyNotionalWei: '100000000000000000',    // 0.1 ETH por dia
+  maxNotionalPerTradeWei: NO_CAP,         // teto por operação: opcional, na tela
+  maxDailyNotionalWei: NO_CAP,            // teto por dia: opcional, na tela
   reserveGasWei: '2000000000000000',      // nunca gastar abaixo desta reserva
 
   // --- risco de mercado --------------------------------------------------
@@ -120,6 +127,30 @@ export function evaluate(decision, ctx) {
     || (decision.notionalWei !== undefined && BigInt(decision.notionalWei) >= BigInt(p.requireApprovalAboveWei));
 
   return { violations: v, approved: v.length === 0, needsApproval };
+}
+
+/**
+ * Agentes criados antes de o teto padrão cair ainda têm 0,01 ETH por operação
+ * e 0,1 ETH por dia gravados. Isto levanta SÓ quem está exatamente nesses
+ * valores antigos — um teto que a pessoa escolheu de propósito, diferente
+ * desses, fica como está. Roda no boot; idempotente.
+ */
+export function liftLegacyCaps(db) {
+  const OLD_TRADE = '10000000000000000';
+  const OLD_DAILY = '100000000000000000';
+  let lifted = 0;
+  for (const row of db.prepare('SELECT id, policy FROM agents').all()) {
+    let p;
+    try { p = JSON.parse(row.policy); } catch { continue; }
+    let changed = false;
+    if (p.maxNotionalPerTradeWei === OLD_TRADE) { p.maxNotionalPerTradeWei = NO_CAP; changed = true; }
+    if (p.maxDailyNotionalWei === OLD_DAILY) { p.maxDailyNotionalWei = NO_CAP; changed = true; }
+    if (changed) {
+      db.prepare('UPDATE agents SET policy = ? WHERE id = ?').run(JSON.stringify(p), row.id);
+      lifted += 1;
+    }
+  }
+  return lifted;
 }
 
 /** Registra a decisão para auditoria antes de qualquer execução. */

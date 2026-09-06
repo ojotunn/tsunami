@@ -191,7 +191,8 @@ test('política padrão é válida e coerente', () => {
 
 test('política rejeita configurações imprudentes', () => {
   assert.throws(() => validatePolicy({ ...DEFAULT_POLICY, mode: 'yolo' }), /propose/);
-  assert.throws(() => validatePolicy({ ...DEFAULT_POLICY, maxNotionalPerTradeWei: '999' + '0'.repeat(18) }), /cannot exceed/);
+  // o teto diário padrão é 1000 ETH; 9999 por operação passa dele
+  assert.throws(() => validatePolicy({ ...DEFAULT_POLICY, maxNotionalPerTradeWei: '9999' + '0'.repeat(18) }), /cannot exceed/);
 });
 
 test('evaluate bloqueia violações de limite', () => {

@@ -2,6 +2,7 @@
 //
 // Existe porque o teto padrão de 0,01 ETH por operação bloqueou uma compra
 // real ("notional … exceeds the per-trade limit") e não havia onde mudar.
+// Desde então não há teto por padrão; a tela serve para quem QUER um.
 import { test, before, after } from 'node:test';
 import assert from 'node:assert/strict';
 import { rmSync } from 'node:fs';
@@ -14,12 +15,22 @@ process.env.PONS_KEYSTORE_DIR = './data/test-keystores-policy';
 const { start } = await import('../src/web/server.js');
 const { createAccount } = await import('../src/wallet/account.js');
 const { signPersonalMessage } = await import('../src/core/secp256k1.js');
+const { liftLegacyCaps } = await import('../src/agent/policy.js');
+const { openDb } = await import('../src/indexer/db.js');
 
-let server, base;
+const NO_CAP = (1000n * 10n ** 18n).toString();
+
+let server, base, dono, intruso, A, B;
 before(async () => {
   server = start({ port: 0, host: '127.0.0.1' });
   await new Promise((r) => server.once('listening', r));
   base = `http://127.0.0.1:${server.address().port}`;
+  // Duas sessões e dois agentes para o arquivo inteiro: nonce e criação de
+  // agente têm limite por IP (20/min e 5/hora), e um por teste estourava.
+  dono = await login(createAccount());
+  intruso = await login(createAccount());
+  A = await agentFor(dono);        // o que os testes editam
+  B = await agentFor(dono);        // o que ninguém deve conseguir editar
 });
 after(() => server?.close());
 
@@ -43,21 +54,39 @@ async function login(account) {
 
 async function agentFor(session) {
   const r = await call('POST', '/api/agents', { cookie: session.cookie, body: { label: 'a', password: 'senha-de-teste-1' } });
+  assert.equal(r.status, 200, `criar agente falhou: ${JSON.stringify(r.body)}`);
   return r.body;
 }
 
-test('o agente novo nasce com a política padrão visível na leitura', async () => {
-  const dono = await login(createAccount());
-  const a = await agentFor(dono);
-  const r = await call('GET', `/api/agents/${a.id}`, { cookie: dono.cookie });
-  assert.equal(r.body.policy.maxNotionalPerTradeWei, '10000000000000000');
+const policyOf = (id) => JSON.parse(openDb(DB).prepare('SELECT policy FROM agents WHERE id = ?').get(id).policy);
+
+test('o agente novo nasce sem teto de valor e em modo de proposta', async () => {
+  const r = await call('GET', `/api/agents/${A.id}`, { cookie: dono.cookie });
+  assert.equal(r.body.policy.maxNotionalPerTradeWei, NO_CAP);
+  assert.equal(r.body.policy.maxDailyNotionalWei, NO_CAP);
   assert.equal(r.body.policy.mode, 'propose');
 });
 
+test('o teto antigo de 0,01 ETH é levantado no boot, e um teto escolhido de propósito não', () => {
+  const db = openDb(DB);
+  const setCaps = (id, trade, daily) => {
+    const p = policyOf(id);
+    p.maxNotionalPerTradeWei = trade; p.maxDailyNotionalWei = daily;
+    db.prepare('UPDATE agents SET policy = ? WHERE id = ?').run(JSON.stringify(p), id);
+  };
+  setCaps(A.id, '10000000000000000', '100000000000000000');     // o padrão antigo
+  setCaps(B.id, '30000000000000000', '100000000000000000');     // teto escolhido de propósito
+  const n = liftLegacyCaps(db);
+  assert.ok(n >= 2, `levantou ${n}`);
+  assert.equal(policyOf(A.id).maxNotionalPerTradeWei, NO_CAP);
+  assert.equal(policyOf(B.id).maxNotionalPerTradeWei, '30000000000000000', 'teto escolhido de propósito fica');
+  assert.equal(policyOf(B.id).maxDailyNotionalWei, NO_CAP, 'só o diário antigo sobe');
+  // deixa B como nasceu, para o teste de propriedade
+  setCaps(B.id, NO_CAP, NO_CAP);
+});
+
 test('o dono sobe o teto por operação em ETH e ele é guardado em wei', async () => {
-  const dono = await login(createAccount());
-  const a = await agentFor(dono);
-  const r = await call('PATCH', `/api/agents/${a.id}/policy`, {
+  const r = await call('PATCH', `/api/agents/${A.id}/policy`, {
     cookie: dono.cookie, body: { maxPerTradeEth: '0.05', maxDailyEth: '0.5', mode: 'auto', approveAboveEth: '0.02', maxTradesPerHour: '12' },
   });
   assert.equal(r.status, 200, JSON.stringify(r.body));
@@ -68,35 +97,28 @@ test('o dono sobe o teto por operação em ETH e ele é guardado em wei', async 
   assert.equal(r.body.policy.maxTradesPerHour, 12);
   // o que não foi enviado fica como estava
   assert.equal(r.body.policy.reserveGasWei, '2000000000000000');
-  const again = await call('GET', `/api/agents/${a.id}`, { cookie: dono.cookie });
+  const again = await call('GET', `/api/agents/${A.id}`, { cookie: dono.cookie });
   assert.equal(again.body.policy.maxNotionalPerTradeWei, '50000000000000000');
 });
 
 test('teto por operação acima do diário é recusado com frase em ETH, não em wei', async () => {
-  const dono = await login(createAccount());
-  const a = await agentFor(dono);
-  const r = await call('PATCH', `/api/agents/${a.id}/policy`, { cookie: dono.cookie, body: { maxPerTradeEth: '1', maxDailyEth: '0.5' } });
+  const r = await call('PATCH', `/api/agents/${A.id}/policy`, { cookie: dono.cookie, body: { maxPerTradeEth: '1', maxDailyEth: '0.5' } });
   assert.equal(r.status, 400);
   assert.match(r.body.error, /per-trade limit cannot be higher than the daily limit/);
 });
 
 test('valor que não é ETH e modo inválido são recusados', async () => {
-  const dono = await login(createAccount());
-  const a = await agentFor(dono);
-  const bad = await call('PATCH', `/api/agents/${a.id}/policy`, { cookie: dono.cookie, body: { maxPerTradeEth: 'muito' } });
-  assert.equal(bad.status, 400);
+  const bad = await call('PATCH', `/api/agents/${A.id}/policy`, { cookie: dono.cookie, body: { maxPerTradeEth: 'muito' } });
+  assert.equal(bad.status, 400, JSON.stringify(bad.body));
   assert.match(bad.body.error, /positive amount of ETH/);
-  const mode = await call('PATCH', `/api/agents/${a.id}/policy`, { cookie: dono.cookie, body: { mode: 'yolo' } });
-  assert.equal(mode.status, 400);
+  const mode = await call('PATCH', `/api/agents/${A.id}/policy`, { cookie: dono.cookie, body: { mode: 'yolo' } });
+  assert.equal(mode.status, 400, JSON.stringify(mode.body));
   assert.match(mode.body.error, /mode must be/);
 });
 
 test('outra conta não edita a política de um agente que não é dela', async () => {
-  const dono = await login(createAccount());
-  const intruso = await login(createAccount());
-  const a = await agentFor(dono);
-  const r = await call('PATCH', `/api/agents/${a.id}/policy`, { cookie: intruso.cookie, body: { maxPerTradeEth: '9' } });
+  const r = await call('PATCH', `/api/agents/${B.id}/policy`, { cookie: intruso.cookie, body: { maxPerTradeEth: '9' } });
   assert.ok(r.status === 403 || r.status === 404, `esperava recusa, veio ${r.status}`);
-  const check = await call('GET', `/api/agents/${a.id}`, { cookie: dono.cookie });
-  assert.equal(check.body.policy.maxNotionalPerTradeWei, '10000000000000000');
+  const check = await call('GET', `/api/agents/${B.id}`, { cookie: dono.cookie });
+  assert.equal(check.body.policy.maxNotionalPerTradeWei, NO_CAP);
 });
