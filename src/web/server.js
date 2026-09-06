@@ -145,19 +145,18 @@ const feeNoticeBlock = () => (FEE.enabled ? `<div class="note" style="margin-bot
 // Fica em variavel de ambiente e nao fixo no codigo: quem auto-hospeda nao deve
 // sair divulgando o token de outra pessoa.
 const SITE_TOKEN = (process.env.PONS_SITE_TOKEN || '').trim();
-const SITE_TOKEN_SYMBOL = (process.env.PONS_SITE_TOKEN_SYMBOL || '').trim();
+const SITE_TOKEN_SYMBOL = (process.env.PONS_SITE_TOKEN_SYMBOL || 'BLIZZARD AI').trim();
 
 /**
- * Perfil no X, quando o operador tiver um. Mesma logica do token: vai em
- * variavel de ambiente e nao fixo no codigo, senao quem clonar o repositorio
- * publica o perfil de outra pessoa no site dele.
+ * Perfil no X. O padrao e o perfil do Blizzard AI; PONS_SITE_X sobrescreve
+ * (e PONS_SITE_X=none tira o link) para quem hospedar outra instancia.
  *
  * So aceita URL do proprio x.com/twitter.com — um link de rodape que aponta
  * para qualquer lugar e um vetor bom demais para deixar aberto por descuido.
  */
 const SITE_X = (() => {
-  const cru = (process.env.PONS_SITE_X || '').trim();
-  if (!cru) return null;
+  const cru = (process.env.PONS_SITE_X ?? 'https://x.com/BlizzardAIPons').trim();
+  if (!cru || cru.toLowerCase() === 'none') return null;
   try {
     const u = new URL(cru);
     if (u.protocol !== 'https:') return null;
@@ -168,13 +167,13 @@ const SITE_X = (() => {
 
 /** Logo do X desenhado inline: a CSP bloqueia imagem de fora, e um SVG de 200
  *  bytes nao merece virar mais um arquivo para servir. */
-const socialLink = () => (SITE_X ? `
+const socialLink = (sep = ' ·') => (SITE_X ? `
   <a href="${escapeHtml(SITE_X.url)}" target="_blank" rel="noopener me"
      style="display:inline-flex;align-items:center;gap:6px"
      aria-label="${escapeHtml(SITE_X.handle)} on X">
     <svg viewBox="0 0 24 24" width="13" height="13" fill="currentColor" aria-hidden="true"
       ><path d="M18.244 2.25h3.308l-7.227 8.26 8.502 11.24H16.17l-5.214-6.817L4.99 21.75H1.68l7.73-8.835L1.254 2.25H8.08l4.713 6.231zm-1.161 17.52h1.833L7.084 4.126H5.117z"/></svg>
-    ${escapeHtml(SITE_X.handle)}</a> ·` : '');
+    <span class="hd">@${escapeHtml(SITE_X.handle)}</span></a>${sep}` : '');
 
 function tokenBadge() {
   if (!isAddress(SITE_TOKEN)) return '';
@@ -249,6 +248,7 @@ const page = (name) => {
       .replaceAll('{{FEE_NOTICE}}', feeNotice())
       .replaceAll('{{FEE_NOTICE_BLOCK}}', feeNoticeBlock())
       .replaceAll('{{TOKEN_BADGE}}', tokenBadge())
+      .replaceAll('{{SOCIAL_NAV}}', socialLink(''))
       .replaceAll('{{SOCIAL}}', socialLink())
       .replaceAll('{{ASSETS_V}}', ASSETS_V);
     pageCache.set(name, Buffer.from(html, 'utf8'));

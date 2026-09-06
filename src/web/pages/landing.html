@@ -38,6 +38,11 @@
   nav .links{display:flex;gap:22px;font-size:14px}
   nav .links a{color:var(--dim)} nav .links a:hover{color:var(--tx)}
   nav .sp{flex:1}
+  /* O X na barra, em formato de botao: e o canal que as pessoas procuram primeiro. */
+  nav .xlink a{color:var(--tx);font-size:13px;font-weight:600;padding:9px 13px;border-radius:10px;
+    border:1px solid var(--line);background:rgba(255,255,255,.03);transition:border-color .15s,color .15s}
+  nav .xlink a:hover{border-color:var(--accent);color:var(--accent)}
+  nav .xlink svg{width:15px;height:15px}
   .btn{background:var(--grad);color:#02111f;border:0;border-radius:10px;padding:11px 20px;
        font:inherit;font-size:14px;font-weight:700;cursor:pointer;display:inline-flex;white-space:nowrap;
        align-items:center;gap:8px;box-shadow:0 8px 30px -10px rgba(34,180,255,.55);
@@ -208,6 +213,14 @@
     .flow div::after{display:none}
     nav .links{display:none}
     nav .btn{padding:9px 14px;font-size:13px}
+    nav .xlink a{padding:9px 10px}
+    nav .xlink .hd{display:none}
+  }
+  @media (max-width:480px){
+    nav .wrap{gap:10px;padding:0 16px}
+    .brand{font-size:15px;gap:8px}
+    .brand img{width:26px;height:26px}
+    nav .btn{padding:8px 11px;font-size:12.5px}
   }
   @media (max-width:760px){
     header{padding:60px 0 56px}
@@ -228,6 +241,7 @@
     <a href="#faq">FAQ</a>
   </div>
   <div class="sp"></div>
+  <span class="xlink">{{SOCIAL_NAV}}</span>
   <a class="btn" href="/app">Open the app</a>
 </div></nav>
 
