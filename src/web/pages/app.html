@@ -766,6 +766,10 @@ $('delegBtn').onclick = async () => {
 
     $('delegOut').innerHTML = tokenBlock + `
       <div class="kv"><span>current payout</span><span class="mono">${esc((st.feeRecipient||'—').slice(0,14))}…</span></div>
+      <div class="kv"><span>connected wallet</span><span class="mono">${esc((d.connected||'—').slice(0,14))}…</span></div>
+      ${st.feeRecipient && d.connected && st.feeRecipient.toLowerCase() !== d.connected.toLowerCase() && !st.redirectedToAgent
+        ? `<div class="note warn">Only the wallet that receives the creator fees can sign this. Log out, connect
+           <span class="mono">${esc(st.feeRecipient)}</span> and come back to this card.</div>` : ''}
       <div class="kv"><span>points to agent</span><span>${st.redirectedToAgent?'yes ✓':'no'}</span></div>
       ${st.version === 'v2' && st.pending ? `<div class="kv"><span>claimable in escrow</span><span>${esc(String(Number(st.pending.inEscrow || 0) / 1e18))} ETH</span></div>` : ''}
       ${d.deployer ? `<div class="kv"><span>token launched by</span><span class="mono">${esc(d.deployer.slice(0,14))}…</span></div>` : ''}
