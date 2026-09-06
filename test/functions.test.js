@@ -159,18 +159,6 @@ test('gastar tudo deixa a reserva de gás de fora', async () => {
   db.close();
 });
 
-test('gastar tudo avisa quando o valor estoura o limite por operação', async () => {
-  const { db, agent } = seed();
-  // Não há teto por padrão; este agente escolheu um de 0,01 ETH na política.
-  const ctx = baseCtx(db, agent);
-  ctx.agent = { ...agent, policy: { ...agent.policy, maxNotionalPerTradeWei: '10000000000000000' } };
-  const out = await planBuyback(ctx, normalizeParams('buyback_burn', { useFullBalance: true }));
-  // 1 ETH menos a reserva passa MUITO do teto de 0.01 por operação.
-  assert.ok(out.notes.some((n) => /above your per-trade limit/.test(n)),
-    'sem esse aviso a política bloquearia e ninguém saberia por quê');
-  db.close();
-});
-
 test('gastar tudo não propõe nada quando a reserva já toma o saldo', async () => {
   const { db, agent } = seed();
   const ctx = baseCtx(db, agent, { balances: { eth: parseUnits('0.001', 18), weth: 0n, token: 0n } });

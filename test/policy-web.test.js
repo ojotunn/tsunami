@@ -60,11 +60,15 @@ async function agentFor(session) {
 
 const policyOf = (id) => JSON.parse(openDb(DB).prepare('SELECT policy FROM agents WHERE id = ?').get(id).policy);
 
-test('o agente novo nasce sem teto de valor e em modo de proposta', async () => {
+test('o agente novo nasce sem teto de valor, sem aprovação e sem teto de ritmo', async () => {
   const r = await call('GET', `/api/agents/${A.id}`, { cookie: dono.cookie });
   assert.equal(r.body.policy.maxNotionalPerTradeWei, NO_CAP);
   assert.equal(r.body.policy.maxDailyNotionalWei, NO_CAP);
-  assert.equal(r.body.policy.mode, 'propose');
+  assert.equal(r.body.policy.mode, 'auto');
+  assert.equal(r.body.policy.requireApprovalAboveWei, NO_CAP);
+  assert.equal(r.body.policy.maxTradesPerHour, 100000);
+  assert.equal(r.body.policy.minSecondsBetweenTrades, 0);
+  assert.equal(r.body.policy.minPoolLiquidityWei, '0');
 });
 
 test('o teto antigo de 0,01 ETH é levantado no boot, e um teto escolhido de propósito não', () => {

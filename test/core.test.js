@@ -185,7 +185,7 @@ test('pool sem liquidez é erro explícito', () => {
 
 test('política padrão é válida e coerente', () => {
   const p = validatePolicy(DEFAULT_POLICY);
-  assert.equal(p.mode, 'propose');
+  assert.equal(p.mode, 'auto');                  // sem aprovação por padrão: põe o valor e roda
   assert.ok(BigInt(p.maxNotionalPerTradeWei) <= BigInt(p.maxDailyNotionalWei));
 });
 
@@ -196,7 +196,12 @@ test('política rejeita configurações imprudentes', () => {
 });
 
 test('evaluate bloqueia violações de limite', () => {
-  const policy = validatePolicy(DEFAULT_POLICY);
+  // O padrão não tem teto nem aprovação; este teste usa uma política estrita
+  // de propósito, para exercitar cada checagem que ainda existe.
+  const policy = validatePolicy({
+    ...DEFAULT_POLICY, mode: 'propose', maxTradesPerHour: 6, minSecondsBetweenTrades: 120,
+    minPoolLiquidityWei: '50000000000000000',
+  });
   const ok = evaluate(
     { kind: 'swap', side: 'buy', token: '0xabc', notionalWei: 10n ** 15n, priceImpactBps: 40 },
     { policy, ethBalanceWei: 10n ** 17n, spentTodayWei: 0n, poolLiquidityWei: 10n ** 18n, tradesLastHour: 0, inventoryBps: 100, drawdownBps: 0, secondsSinceLastTrade: 999 },

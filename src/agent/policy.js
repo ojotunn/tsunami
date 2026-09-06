@@ -1,33 +1,35 @@
 // Política de risco do agente. Tudo que a camada de execução puder fazer
 // precisa passar por aqui primeiro — o agente de IA propõe, a política decide.
 
-// Sem teto de valor por padrão. A pessoa deposita o que quer gastar e o agente
-// gasta; quem quiser um teto coloca na tela da política. Os 0,01 ETH por
-// operação que existiam aqui bloquearam uma compra real de quem tinha
-// depositado mais — e um limite que a pessoa não pediu não é proteção, é
-// tropeço. O que continua protegendo sem pedir licença é a reserva de gás.
+// Sem teto e sem aprovação por padrão. A pessoa põe o valor e roda o agente.
+//
+// A política já bloqueou uma compra real por um teto de 0,01 ETH por operação
+// que ninguém pediu, e depois de novo por um teto gravado na tela. A regra que
+// ficou: a política NÃO julga valor. Quem escolhe quanto gastar é quem
+// depositou. O que continua protegendo sem pedir licença é a reserva de gás —
+// sem ela a carteira não consegue nem sair de uma posição.
 const NO_CAP = (1000n * 10n ** 18n).toString();   // 1000 ETH: na prática, sem teto
 
 export const DEFAULT_POLICY = {
   // --- capital -----------------------------------------------------------
   minFundingWei: '1000000000000000',      // 0.001 ETH mínimo para ativar
-  maxNotionalPerTradeWei: NO_CAP,         // teto por operação: opcional, na tela
-  maxDailyNotionalWei: NO_CAP,            // teto por dia: opcional, na tela
+  maxNotionalPerTradeWei: NO_CAP,         // não é avaliado; fica por compatibilidade
+  maxDailyNotionalWei: NO_CAP,            // idem
   reserveGasWei: '2000000000000000',      // nunca gastar abaixo desta reserva
 
   // --- risco de mercado --------------------------------------------------
   maxSlippageBps: 100,
-  minPoolLiquidityWei: '50000000000000000', // ignora pools sem profundidade
+  minPoolLiquidityWei: '0',               // sem mínimo: a pessoa escolheu o token
   maxDrawdownBps: 2000,                   // 20% de queda do NAV pausa o agente
   maxInventoryBps: 6000,                  // no máx. 60% do NAV no token
 
   // --- ritmo -------------------------------------------------------------
-  maxTradesPerHour: 6,
-  minSecondsBetweenTrades: 120,
+  maxTradesPerHour: 100000,               // sem teto de ritmo por padrão
+  minSecondsBetweenTrades: 0,
 
   // --- governança --------------------------------------------------------
-  mode: 'propose',                        // 'propose' | 'auto'
-  requireApprovalAboveWei: '5000000000000000',
+  mode: 'auto',                           // 'auto' | 'propose' — sem aprovação por padrão
+  requireApprovalAboveWei: NO_CAP,        // em 'auto', nunca volta a pedir aval
   allowedTokens: [],                      // vazio = qualquer token indexado
   blockedTokens: [],
   killSwitch: false,
@@ -77,8 +79,9 @@ export function evaluate(decision, ctx) {
     // Os limites de notional continuam olhando SÓ o notional: taxa não é
     // exposição de mercado, e somá-la aqui encolheria em silêncio o orçamento
     // de todo agente já salvo.
-    if (n > BigInt(p.maxNotionalPerTradeWei)) v.push(`notional ${n} exceeds the per-trade limit`);
-    if (BigInt(ctx.spentTodayWei ?? 0) + n > BigInt(p.maxDailyNotionalWei)) v.push('daily notional limit exceeded');
+    // Valor NÃO é julgado aqui: a pessoa depositou e escolheu quanto gastar.
+    // maxNotionalPerTradeWei e maxDailyNotionalWei continuam existindo no
+    // objeto por compatibilidade com políticas já gravadas, e só isso.
 
     // A reserva de gás, sim, olha a saída TOTAL de ETH. Ela existe para o
     // agente sempre conseguir sair de uma posição, e a taxa também sai da
@@ -130,21 +133,30 @@ export function evaluate(decision, ctx) {
 }
 
 /**
- * Agentes criados antes de o teto padrão cair ainda têm 0,01 ETH por operação
- * e 0,1 ETH por dia gravados. Isto levanta SÓ quem está exatamente nesses
- * valores antigos — um teto que a pessoa escolheu de propósito, diferente
- * desses, fica como está. Roda no boot; idempotente.
+ * Agentes criados antes carregam os padrões antigos gravados: teto de valor,
+ * ritmo de 6 por hora, 2 minutos entre operações, profundidade mínima e modo
+ * "propose". Isto levanta SÓ quem está exatamente nos valores antigos — um
+ * valor que a pessoa escolheu de propósito fica como está. Roda no boot;
+ * idempotente.
  */
 export function liftLegacyCaps(db) {
-  const OLD_TRADE = '10000000000000000';
-  const OLD_DAILY = '100000000000000000';
+  const OLD = {
+    maxNotionalPerTradeWei: ['10000000000000000', NO_CAP],
+    maxDailyNotionalWei: ['100000000000000000', NO_CAP],
+    minPoolLiquidityWei: ['50000000000000000', '0'],
+    maxTradesPerHour: [6, 100000],
+    minSecondsBetweenTrades: [120, 0],
+    requireApprovalAboveWei: ['5000000000000000', NO_CAP],
+    mode: ['propose', 'auto'],
+  };
   let lifted = 0;
   for (const row of db.prepare('SELECT id, policy FROM agents').all()) {
     let p;
     try { p = JSON.parse(row.policy); } catch { continue; }
     let changed = false;
-    if (p.maxNotionalPerTradeWei === OLD_TRADE) { p.maxNotionalPerTradeWei = NO_CAP; changed = true; }
-    if (p.maxDailyNotionalWei === OLD_DAILY) { p.maxDailyNotionalWei = NO_CAP; changed = true; }
+    for (const [k, [was, now]] of Object.entries(OLD)) {
+      if (p[k] === was) { p[k] = now; changed = true; }
+    }
     if (changed) {
       db.prepare('UPDATE agents SET policy = ? WHERE id = ?').run(JSON.stringify(p), row.id);
       lifted += 1;

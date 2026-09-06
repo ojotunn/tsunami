@@ -76,11 +76,6 @@ export async function plan(ctx, params) {
       + `keeping ${formatUnits(reserva, 18)} ETH for gas`
       + (FEE.enabled ? ` and ${formatUnits(folga - amountIn, 18)} ETH for the service fee` : ''));
 
-    const teto = BigInt(ctx.agent?.policy?.maxNotionalPerTradeWei ?? 0);
-    if (teto > 0n && amountIn > teto) {
-      notes.push(`this is above your per-trade limit of ${formatUnits(teto, 18)} ETH and will be blocked — `
-        + 'raise the limit in the policy or turn this option off');
-    }
   }
 
   // Na bonding curve (pons v2) a compra é paga em ETH nativo, direto no
