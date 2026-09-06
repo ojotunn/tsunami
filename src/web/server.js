@@ -145,10 +145,14 @@ const FEE_TEXT = () =>
 const feeNotice = () => (FEE.enabled ? `<li>${FEE_TEXT()}</li>` : '');
 const feeNoticeBlock = () => (FEE.enabled ? `<div class="note" style="margin-bottom:16px">${FEE_TEXT()}</div>` : '');
 
-// Contrato do token da propria instancia, quando o operador quiser anunciar um.
-// Fica em variavel de ambiente e nao fixo no codigo: quem auto-hospeda nao deve
-// sair divulgando o token de outra pessoa.
-const SITE_TOKEN = (process.env.PONS_SITE_TOKEN || '').trim();
+// Contrato do token da casa. O padrao e o BLIZZARD AI (pons v2, conferido na
+// chain em 06/09/2026: nome, simbolo, factory v2 e curva). PONS_SITE_TOKEN
+// sobrescreve, e PONS_SITE_TOKEN=none tira o badge, para quem hospedar outra
+// instancia nao sair divulgando o token de outra pessoa.
+const SITE_TOKEN = (() => {
+  const cru = (process.env.PONS_SITE_TOKEN ?? '0xe1d526E442469E4A9881FfD0afbA79a3ee88D250').trim();
+  return cru.toLowerCase() === 'none' ? '' : cru;
+})();
 const SITE_TOKEN_SYMBOL = (process.env.PONS_SITE_TOKEN_SYMBOL || 'BLIZZARD AI').trim();
 
 /**
