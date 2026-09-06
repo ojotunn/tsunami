@@ -9,6 +9,7 @@
 //      as pessoas de tirarem o próprio dinheiro.
 //   2. um jeito de responder "o que aconteceu com a minha transação" com um
 //      registro, e não com memória.
+import { treasuryStatus } from '../agent/treasury.js';
 import { eqAddress } from '../core/hex.js';
 import { resolveFeeConfig } from '../agent/fee.js';
 import { dataPersistence } from '../wallet/persistence.js';
@@ -77,6 +78,7 @@ export function operatorStatus(db) {
     // Rota só de admin, então aqui o `problem` pode aparecer: é exatamente onde
     // o operador vai olhar para descobrir por que não está recebendo.
     serviceFee: resolveFeeConfig(),
+    treasury: treasuryStatus(),
     // Se isto vier `persistent:false`, nada mais nesta tela importa: as chaves
     // dos agentes somem no proximo deploy.
     storage: dataPersistence(),

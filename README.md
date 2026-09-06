@@ -123,6 +123,36 @@ node src/cli.js pause "reason" / resume   # stop new agents and executions
 | `PONS_MASTER_KEY` | — | Seals keystores at rest so a stolen volume is not enough. Generate with `node src/cli.js master-key` and keep it off the server |
 | `PONS_FEE_ADDRESS` | — | Wallet that receives the service fee. **Unset means no fee at all** |
 | `PONS_FEE_BPS` | `500` | Service fee in basis points (500 = 5%). Ceiling: 1000 (10%) |
+| `PONS_TREASURY_AGENT` | — | Agent (id or address) that turns the collected fee into buyback & burn. See *Treasury* |
+| `PONS_TREASURY_PASSWORD` | — | Keystore password of that agent, so the server can sign for it |
+| `PONS_TREASURY_INTERVAL_MIN` | `30` | How often the treasury loop runs |
+| `PONS_TREASURY_MIN_ETH` | `0.005` | Only buy once this much ETH sits in the treasury beyond the gas reserve |
+
+### Treasury: fee → buyback & burn
+
+The fee is a plain ETH transfer to `PONS_FEE_ADDRESS`. Point that address at an
+agent created in the app itself and the fee becomes buy pressure on your own
+token:
+
+1. In the app, create an agent (say "treasury"), set its target token to the
+   token you want to burn, and note its wallet address and id.
+2. Set `PONS_FEE_ADDRESS` to that wallet, `PONS_TREASURY_AGENT` to the id, and
+   `PONS_TREASURY_PASSWORD` to the keystore password you chose. Restart.
+3. On boot the server rewrites that agent's policy to the treasury profile (auto
+   mode, no per-trade or daily cap) and enables *Buyback & burn* with *spend the
+   whole balance*. Then, every `PONS_TREASURY_INTERVAL_MIN` minutes, it runs the
+   agent and sends whatever buyback passed the policy — signed with the password
+   from the environment, recorded in the decisions table like any click.
+
+Everything stays public: the landing gains a *Where the fee goes* section fed by
+`GET /api/burn` (ETH waiting, buybacks executed, ETH spent, share of supply
+burned), and the operator status shows the loop's last run and last error. The
+usual locks still apply: `PONS_ALLOW_LIVE_EXECUTION` must be `1`, maintenance
+pauses the loop, and the gas reserve is never spent. The treasury's own buys pay
+no fee (a fee to yourself would only burn gas).
+
+Known limit: a pons v2 token that has graduated trades on Uniswap v4, where this
+build cannot buy yet. Fees keep accumulating in the treasury until that lands.
 
 ### Service fee
 

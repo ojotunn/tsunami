@@ -12,7 +12,7 @@ import { fileURLToPath, pathToFileURL } from 'node:url';
 import { dirname, join, resolve } from 'node:path';
 
 import { RpcClient } from '../core/rpc.js';
-import { CHAIN, CONTRACTS, BURN_ADDRESS } from '../chain/config.js';
+import { CHAIN, CONTRACTS, BURN_ADDRESS, TOKEN_ABI, abiItem } from '../chain/config.js';
 import { openDb, listTokens, getToken } from '../indexer/db.js';
 import { createAgent, listAgents, getAgent, agentBalances, exportKeystore, syncFundedStatus } from '../wallet/agentWallet.js';
 import { catalog, enableFunction, disableFunction, agentFunctions } from '../functions/index.js';
@@ -35,6 +35,7 @@ import { FEE } from '../agent/fee.js';
 import { isAddress } from '../core/hex.js';
 import { dataPersistence, persistenceWarning, assertCanCreateAgents } from '../wallet/persistence.js';
 import { unlockAgent } from '../wallet/agentWallet.js';
+import { startTreasury, treasuryStatus } from '../agent/treasury.js';
 import { warnIfUnsealed } from '../wallet/envelope.js';
 import {
   migrateOperator, maintenance, setMaintenance, isAdmin, operatorStatus,
@@ -136,7 +137,10 @@ const FEE_TEXT = () =>
    creator rewards it collects for you. It is charged in ETH only — never taken from your
    tokens — and it is shown on screen, per action, before you approve anything.
    <strong>Withdrawing your funds is free</strong>, and airdrops are not charged.
-   If you run this software yourself, there is no fee at all.`;
+   If you run this software yourself, there is no fee at all.${treasuryStatus().enabled
+    ? ` <strong>Where it goes:</strong> 100% of the fee lands in a public treasury wallet
+   (<code>${escapeHtml(treasuryStatus().address)}</code>) that buys back and burns
+   ${escapeHtml(SITE_TOKEN_SYMBOL)}. Nothing is kept by the operator.` : ''}`;
 
 const feeNotice = () => (FEE.enabled ? `<li>${FEE_TEXT()}</li>` : '');
 const feeNoticeBlock = () => (FEE.enabled ? `<div class="note" style="margin-bottom:16px">${FEE_TEXT()}</div>` : '');
@@ -174,6 +178,95 @@ const socialLink = (sep = ' ·') => (SITE_X ? `
     <svg viewBox="0 0 24 24" width="13" height="13" fill="currentColor" aria-hidden="true"
       ><path d="M18.244 2.25h3.308l-7.227 8.26 8.502 11.24H16.17l-5.214-6.817L4.99 21.75H1.68l7.73-8.835L1.254 2.25H8.08l4.713 6.231zm-1.161 17.52h1.833L7.084 4.126H5.117z"/></svg>
     <span class="hd">@${escapeHtml(SITE_X.handle)}</span></a>${sep}` : '');
+
+/**
+ * Secao da landing "para onde vai a taxa". So existe quando a tesouraria esta
+ * ligada; sem ela, o site nao promete recompra nenhuma. Os numeros vem de
+ * /api/burn na hora, lidos da chain e da tabela de decisoes, para a promessa
+ * ser verificavel na propria pagina e nao so no explorer.
+ */
+function feeFlow() {
+  const st = treasuryStatus();
+  if (!st.enabled || !FEE.enabled) return '';
+  const addr = escapeHtml(st.address);
+  const sym = escapeHtml(SITE_TOKEN_SYMBOL);
+  return `
+<section id="burn" class="alt"><div class="wrap">
+  <div class="lbl">Where the fee goes</div>
+  <h2>100% of the service fee buys back and burns ${sym}</h2>
+  <p class="sub">Every fee paid on this site lands in a public treasury wallet. An agent — the same
+     software you use — spends it buying ${sym} and sends the tokens to the burn address. The
+     operator keeps nothing.</p>
+  <div class="burnstats" id="burnStats">
+    <div><small>Waiting in treasury</small><b data-k="ethWaiting">…</b><span>ETH</span></div>
+    <div><small>Buybacks executed</small><b data-k="buybacks">…</b><span>by the treasury</span></div>
+    <div><small>ETH spent on buybacks</small><b data-k="ethSpent">…</b><span>ETH</span></div>
+    <div><small>Burned so far</small><b data-k="burnedPct">…</b><span>of total supply</span></div>
+  </div>
+  <p class="note">Treasury wallet <code class="mono">${addr}</code>
+     · <a href="${escapeHtml(CHAIN.explorer)}/address/${addr}" target="_blank" rel="noopener">view on the explorer</a>
+     <span id="lastBurn"></span></p>
+  <script>
+  fetch('/api/burn').then((r) => r.json()).then((b) => {
+    if (!b || !b.enabled) return;
+    const set = (k, v) => { const el = document.querySelector('#burnStats [data-k="' + k + '"]'); if (el) el.textContent = v; };
+    set('ethWaiting', b.ethWaiting ?? '—');
+    set('buybacks', String(b.buybacks ?? 0));
+    set('ethSpent', b.ethSpent ?? '—');
+    set('burnedPct', b.burnedPct != null ? b.burnedPct + '%' : '—');
+    if (b.lastTx) {
+      const a = document.createElement('a'); a.href = b.explorer + '/tx/' + b.lastTx; a.target = '_blank'; a.rel = 'noopener';
+      a.textContent = 'last burn'; const s = document.getElementById('lastBurn'); s.append(' · '); s.append(a);
+    }
+  }).catch(() => {});
+  </script>
+</div></section>`;
+}
+
+// Numeros da tesouraria, com cache de um minuto: a pagina inicial e publica e
+// nao pode virar uma leitura de chain por visita.
+let burnCache = { at: 0, body: null };
+async function burnStats() {
+  const st = treasuryStatus();
+  if (!st.enabled) return { enabled: false };
+  if (burnCache.body && Date.now() - burnCache.at < 60_000) return burnCache.body;
+
+  const agent = getAgent(db, st.agentId);
+  const token = st.token;
+  const balanceOf = abiItem(TOKEN_ABI, 'balanceOf');
+  const [eth, burned, supply, decimals] = await Promise.all([
+    rpcFast.getBalance(st.address).catch(() => null),
+    rpcFast.read(token, balanceOf, [BURN_ADDRESS]).catch(() => null),
+    rpcFast.read(token, abiItem(TOKEN_ABI, 'totalSupply')).catch(() => null),
+    rpcFast.read(token, abiItem(TOKEN_ABI, 'decimals')).then(Number).catch(() => 18),
+  ]);
+  const rows = agent
+    ? db.prepare("SELECT tx_hash, ts, payload FROM decisions WHERE agent_id = ? AND kind = 'buyback_burn' AND status = 'executed' ORDER BY ts DESC").all(agent.id)
+    : [];
+  let spent = 0n;
+  for (const r of rows) { try { spent += BigInt(JSON.parse(r.payload).notionalWei ?? 0); } catch { /* linha antiga */ } }
+  const pct = burned !== null && supply && supply > 0n ? Number((burned * 10000n) / supply) / 100 : null;
+
+  burnCache = {
+    at: Date.now(),
+    body: {
+      enabled: true,
+      treasury: st.address,
+      token,
+      symbol: getToken(db, token)?.symbol ?? SITE_TOKEN_SYMBOL,
+      ethWaiting: eth === null ? null : formatUnits(eth, 18, 4),
+      buybacks: rows.length,
+      ethSpent: formatUnits(spent, 18, 4),
+      burnedTotal: burned === null ? null : formatUnits(burned, decimals, 0),
+      burnedPct: pct === null ? null : pct.toFixed(2),
+      lastTx: rows[0]?.tx_hash ?? null,
+      lastAt: rows[0]?.ts ?? null,
+      feeAddressMatches: st.feeAddressMatches,
+      explorer: CHAIN.explorer,
+    },
+  };
+  return burnCache.body;
+}
 
 function tokenBadge() {
   if (!isAddress(SITE_TOKEN)) return '';
@@ -248,6 +341,7 @@ const page = (name) => {
       .replaceAll('{{FEE_NOTICE}}', feeNotice())
       .replaceAll('{{FEE_NOTICE_BLOCK}}', feeNoticeBlock())
       .replaceAll('{{TOKEN_BADGE}}', tokenBadge())
+      .replaceAll('{{FEE_FLOW}}', feeFlow())
       .replaceAll('{{SOCIAL_NAV}}', socialLink(''))
       .replaceAll('{{SOCIAL}}', socialLink())
       .replaceAll('{{ASSETS_V}}', ASSETS_V);
@@ -316,8 +410,14 @@ const publicRoutes = {
     // Taxa de serviço: null quando não há. O endereço é público de qualquer
     // forma assim que o primeiro pagamento sai; `problem` é que NÃO sai daqui,
     // porque é diagnóstico do operador, não informação do usuário.
-    serviceFee: FEE.enabled ? { bps: FEE.bps, address: FEE.address } : null,
+    serviceFee: FEE.enabled ? {
+      bps: FEE.bps, address: FEE.address,
+      // Quando ha tesouraria, a taxa e recompra e queima do token da casa.
+      burn: treasuryStatus().enabled ? { treasury: treasuryStatus().address, token: treasuryStatus().token, symbol: SITE_TOKEN_SYMBOL } : null,
+    } : null,
   }),
+
+  'GET /api/burn': async () => burnStats(),
 
   'GET /api/health': async () => {
     try {
@@ -837,6 +937,14 @@ export function start({ port = Number(process.env.PORT || 8787), host = process.
     } else if (persist.checked) {
       console.log(`data volume ...... ${persist.dir} is on a persistent mount ✓`);
     }
+    // Tesouraria: a taxa vira recompra e queima, sem clique. So liga com
+    // PONS_TREASURY_AGENT + PONS_TREASURY_PASSWORD; sem eles, nada muda.
+    startTreasury({
+      db, rpc, live: LIVE_EXECUTION,
+      isMaintenanceOn: () => maintenance(db).on,
+      recordExecution,
+      log: console.log,
+    });
     const m = maintenance(db);
     if (m.on) console.warn(`NOTICE: maintenance mode is ON (${m.source}) — creating agents and executing are paused.`);
     // Formato conferido de verdade: um endereço com erro de digitação passava em

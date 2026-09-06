@@ -60,8 +60,9 @@ function esquecerAceite(address) {
 
 test('config publica a taxa para o front poder mostrá-la', async () => {
   const { body } = await call('GET', '/api/config');
+  // `burn` e null sem tesouraria configurada: o site nao promete recompra que nao existe.
   assert.deepEqual(body.serviceFee, {
-    bps: 500, address: '0x00000000000000000000000000000000feeabc01',
+    bps: 500, address: '0x00000000000000000000000000000000feeabc01', burn: null,
   });
 });
 
