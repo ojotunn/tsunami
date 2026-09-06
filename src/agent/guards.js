@@ -1,6 +1,7 @@
 // Restrições impostas pelo próprio protocolo Pons. Ignorá-las faz a transação
 // reverter e queimar gás — o agente checa antes de montar qualquer ordem.
 import { CONTRACTS, FACTORY_ABI, TOKEN_ABI, abiItem } from '../chain/config.js';
+import { detectV2 } from '../chain/v2.js';
 
 /**
  * Lê a LaunchConfig do token e devolve os limites vigentes:
@@ -11,7 +12,34 @@ import { CONTRACTS, FACTORY_ABI, TOKEN_ABI, abiItem } from '../chain/config.js';
  */
 export async function protocolLimits(rpc, token) {
   const launched = await rpc.read(CONTRACTS.factory, abiItem(FACTORY_ABI, 'getLaunchedToken'), [token]);
-  if (!launched.exists) throw new Error('this token was not launched by this factory');
+  if (!launched.exists) {
+    // Pons V2: sem janela anti-sniping por tamanho (o que existe é uma taxa
+    // que decai em segundos, já dentro da cotação). Nada limita a ordem além
+    // do que ainda está à venda na curva — e isso a cotação trata sozinha.
+    const v2 = await detectV2(rpc, token);
+    if (!v2) throw new Error('this token was not launched by this factory');
+    return {
+      version: 'v2',
+      launch: v2,
+      curve: v2.curve,
+      phase: v2.phase,
+      launchBlock: null,
+      isLaunchBlock: false,
+      isToken0: false,
+      poolFee: v2.poolFee,
+      pairedToken: v2.pairToken,
+      positionManager: null,
+      positionId: null,
+      supply: 0n,
+      restrictionsActive: false,
+      restrictionsEndBlock: 0n,
+      blocksUntilFree: 0n,
+      maxTxTokens: 0n,
+      maxWalletTokens: 0n,
+      routerRequiresDeadline: false,
+      graduationThreshold: v2.graduationThreshold,
+    };
+  }
 
   const cfg = await rpc.read(CONTRACTS.factory, abiItem(FACTORY_ABI, 'getLaunchConfig'), [launched.launchConfigId]);
   const head = await rpc.blockNumber();
@@ -28,6 +56,7 @@ export async function protocolLimits(rpc, token) {
   // O contrato compara com `<=`, não `<`: no bloco final as restrições ainda valem.
   const active = head <= endBlock;
   return {
+    version: 'v1',
     launchBlock,
     isLaunchBlock: launchBlock !== null && head === launchBlock,
     isToken0: launched.isToken0,

@@ -1,7 +1,8 @@
 // Indexador: backfill + acompanhamento em tempo real de TokenLaunched e Swap.
 import { RpcClient } from '../core/rpc.js';
+import { detectV2, curveState, curveSpotPrice } from '../chain/v2.js';
 import { CONTRACTS, FACTORY_ABI, POOL_ABI, TOKEN_ABI, abiItem } from '../chain/config.js';
-import { openDb, getMeta, setMeta, upsertToken, updateTokenState, insertSwap, insertSnapshot, listTokens, trackedPools, getToken } from './db.js';
+import { openDb, getMeta, setMeta, upsertToken, updateTokenState, insertSwap, insertSnapshot, listTokens, trackedPools, getToken, setTokenVersion } from './db.js';
 import { swapSide, swapPairVolume, tokenPriceInPair, marketCapInPair } from '../market/pricing.js';
 
 const TOKEN_LAUNCHED = abiItem(FACTORY_ABI, 'TokenLaunched', 'event');
@@ -118,7 +119,10 @@ export async function ensureTokenIndexed(db, rpc, address) {
     .read(CONTRACTS.factory, abiItem(FACTORY_ABI, 'getLaunchedToken'), [address])
     .catch(() => null);
   if (!launched?.exists) {
-    throw new Error('this token was not launched by the pons factory this tool is configured for');
+    // A V1 não conhece o token: pode ser um lançamento V2 (bonding curve).
+    const v2 = await detectV2(rpc, address).catch(() => null);
+    if (!v2) throw new Error('this token was not launched by the pons factory this tool is configured for');
+    return ensureV2TokenIndexed(db, rpc, address, v2, existing);
   }
 
   const reads = ['name', 'symbol', 'decimals', 'totalSupply', 'liquidityPool']
@@ -150,9 +154,85 @@ export async function ensureTokenIndexed(db, rpc, address) {
   return getToken(db, address);
 }
 
+/**
+ * Token V2: não há pool nem posição — o "pool" gravado é a própria curva,
+ * para o resto do código (que pergunta "tem pool?") continuar funcionando.
+ * O par é ETH nativo (ou outro ativo, que o agente não opera).
+ */
+async function ensureV2TokenIndexed(db, rpc, address, v2, existing) {
+  const reads = ['name', 'symbol', 'decimals', 'totalSupply']
+    .map((n) => ({ address, item: abiItem(TOKEN_ABI, n) }));
+  const [name, symbol, decimals, supply] = await rpc.readMany(reads);
+
+  upsertToken(db, {
+    address,
+    deployer: v2.deployer,
+    pairToken: v2.nativeQuote ? CONTRACTS.weth : v2.pairToken,
+    pool: v2.curve,
+    dexId: '', launchConfigId: '', positionId: '',
+    restrictionsEndBlock: 0n, initialBuyAmount: 0n,
+    launchBlock: existing?.launch_block ?? 0,
+    launchTx: existing?.launch_tx ?? null,
+  });
+  updateTokenState(db, address, {
+    name: name.ok ? name.value : null,
+    symbol: symbol.ok ? symbol.value : null,
+    decimals: decimals.ok ? Number(decimals.value) : 18,
+    totalSupply: supply.ok ? supply.value : 0n,
+    isToken0: false,
+    poolFee: v2.poolFee,
+  });
+  setTokenVersion(db, address, { version: 'v2', curve: v2.curve, phase: v2.phase });
+  return getToken(db, address);
+}
+
+/**
+ * Foto do mercado de um token V2. Antes da graduação o preço sai das reservas
+ * da curva; `liquidity` recebe a reserva de cotação em wei, que é o que a
+ * política de risco compara com o mínimo de profundidade. Depois da
+ * graduação o preço vive numa pool V4 que este projeto ainda não lê — a foto
+ * fica sem preço, e as funções de compra dizem isso em vez de chutar.
+ */
+async function snapshotV2(db, rpc, t) {
+  const launch = await detectV2(rpc, t.address);
+  if (!launch) throw new Error('the v2 factory no longer knows this token');
+  if (launch.phase !== (t.phase ?? 0)) setTokenVersion(db, t.address, { version: 'v2', curve: launch.curve, phase: launch.phase });
+
+  const base = {
+    token: t.address,
+    block: Number(await rpc.blockNumber()),
+    ts: Math.floor(Date.now() / 1000),
+    version: 'v2',
+    launch,
+    graduated: launch.graduated,
+  };
+
+  if (launch.graduated) {
+    const snap = { ...base, venue: 'v4', curve: null, sqrtPriceX96: 0n, liquidity: 0n, pricePair: 0n, mcapPair: 0n, tick: 0n };
+    insertSnapshot(db, snap);
+    return snap;
+  }
+
+  const curve = await curveState(rpc, launch.curve);
+  const price = curveSpotPrice(curve);
+  const snap = {
+    ...base,
+    venue: 'curve',
+    curve,
+    sqrtPriceX96: 0n,
+    liquidity: curve.quoteReserve,
+    pricePair: price,
+    mcapPair: marketCapInPair(price, BigInt(t.total_supply || '0'), t.decimals ?? 18),
+    tick: 0n,
+  };
+  insertSnapshot(db, snap);
+  return snap;
+}
+
 export async function snapshotToken(db, rpc, address) {
   const t = getToken(db, address);
   if (!t?.pool) throw new Error('token has no indexed pool');
+  if (t.version === 'v2') return snapshotV2(db, rpc, t);
   const [slot0, liq, grad] = await rpc.readMany([
     { address: t.pool, item: abiItem(POOL_ABI, 'slot0') },
     { address: t.pool, item: abiItem(POOL_ABI, 'liquidity') },

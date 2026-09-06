@@ -23,6 +23,7 @@ import { delegationCalls } from '../chain/locker.js';
 import { encodeFunctionData } from '../core/abi.js';
 import { explainRpcError } from '../chain/errors.js';
 import { inspectToken } from '../chain/token.js';
+import { delegationCallsV2 } from '../chain/v2.js';
 import { formatUnits } from '../market/pricing.js';
 import {
   migrateAuth, issueNonce, verifyLogin, sessionFromToken, logout, loginMessage,
@@ -489,8 +490,13 @@ const privateRoutes = {
     // o botão. A MetaMask já avisa "likely to fail", mas não diz por quê — e é o
     // porquê que resolve o problema. Aqui a resposta vem do próprio contrato.
     const from = ctx.session.address;
+    // V1 delega no locker (setFeeRedirect); V2 delega na factory
+    // (transferCreatorFeeRecipient). A inspeção diz qual das duas.
+    const calls = info?.version === 'v2'
+      ? delegationCallsV2({ token, agentAddress: agent.address })
+      : delegationCalls({ token, agentAddress: agent.address });
     const transactions = await Promise.all(
-      delegationCalls({ token, agentAddress: agent.address }).map(async (c) => {
+      calls.map(async (c) => {
         const data = encodeFunctionData(c.item, c.args);
         const tx = {
           label: c.label, note: c.note, to: c.to, data,

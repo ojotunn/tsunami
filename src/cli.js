@@ -90,6 +90,8 @@ async function main() {
       console.log(`factory ........... ${CONTRACTS.factory}`);
       console.log(`launchEnabled ..... ${enabled}`);
       console.log(`launchFee ......... ${formatUnits(fee, 18)} ETH`);
+      console.log(`v2 factory ........ ${CONTRACTS.v2Factory}`);
+      console.log(`v2 fee escrow ..... ${CONTRACTS.v2FeeEscrow}`);
       break;
     }
 

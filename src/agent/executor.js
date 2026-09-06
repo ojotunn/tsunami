@@ -11,6 +11,7 @@
 //     a carteira do agente numa única transação.
 import { CHAIN, CONTRACTS, TOKEN_ABI, BURN_ADDRESS, abiItem } from '../chain/config.js';
 import { LOCKER_ABI, lockerItem } from '../chain/locker.js';
+import { V2, curveItem, escrowItem } from '../chain/v2.js';
 import { routerItem, swapParams, wethItem } from '../chain/router.js';
 import { encodeFunctionData } from '../core/abi.js';
 import { signTransaction, maxCost } from '../chain/tx.js';
@@ -190,10 +191,34 @@ export class Executor {
  */
 export async function compileDecision({ rpc, decision, agentAddress, token }) {
   const limits = await protocolLimits(rpc, token);
-  const dex = await dexRouting(rpc, await dexIdOf(rpc, token));
+  const isV2 = limits.version === 'v2';
+  // Na V2 não há router: a compra é uma chamada à curva. Ler a config de DEX
+  // da factory V1 para um token V2 seria perguntar a quem não conhece o token.
+  const dex = isV2 ? null : await dexRouting(rpc, await dexIdOf(rpc, token));
   const calls = [];
 
   for (const step of decision.steps ?? []) {
+    if (step.action === 'swap' && step.side === 'buy' && isV2) {
+      // Pons v2. Antes da graduação, uma transação só: `buy` na curva, com o
+      // ETH como value — sem WETH, sem allowance. Depois da graduação o token
+      // negocia numa pool Uniswap V4, que exige um router com callback; este
+      // projeto ainda não tem um, e montar uma chamada que reverte só para
+      // parecer completo é pior do que dizer não.
+      if (limits.phase !== 0) {
+        throw new Error('this launch has graduated to a Uniswap v4 pool; buying there is not supported yet — ' +
+          'withdraw the ETH and trade on the pons app');
+      }
+      const amountIn = BigInt(step.amountInWei);
+      calls.push({
+        label: `buy ${formatUnits(amountIn, 18)} ETH worth of the token on the bonding curve`,
+        to: limits.curve,
+        data: encodeFunctionData(curveItem('buy'), [amountIn, BigInt(step.minOutWei ?? 0n), agentAddress]),
+        value: amountIn,
+        capturesTokenDelta: true,
+      });
+      continue;
+    }
+
     if (step.action === 'swap' && step.side === 'buy') {
       const amountIn = BigInt(step.amountInWei);
 
@@ -256,6 +281,32 @@ export async function compileDecision({ rpc, decision, agentAddress, token }) {
         data: encodeFunctionData(lockerItem('collectFees'), step.args),
         // Quanto entrou só se sabe medindo: o locker não devolve o valor para
         // quem chama, e a taxa incide sobre o que de fato chegou.
+        capturesEthDelta: true,
+      });
+      continue;
+    }
+
+    // Pons v2, passo 1 de 2: varrer as taxas da curva para o fee escrow. É
+    // opcional de propósito — se a varredura reverter (o operador da pons já
+    // varreu, ou a curva exige o operador), o saque do que JÁ está no escrow
+    // ainda vale a pena, e um passo obrigatório derrubaria a decisão inteira.
+    if (step.action === 'call' && step.method === 'sweepFees') {
+      calls.push({
+        label: 'sweep the pending fees from the bonding curve into the fee escrow',
+        to: step.to,
+        data: encodeFunctionData(curveItem('sweepFees'), [0n]),
+        optional: true,
+      });
+      continue;
+    }
+
+    // Pons v2, passo 2 de 2: sacar do escrow. `claim()` paga ETH nativo ao
+    // chamador; o valor que entrou é medido pelo delta, como no locker.
+    if (step.action === 'call' && step.method === 'claimEscrow') {
+      calls.push({
+        label: 'claim the creator rewards from the fee escrow',
+        to: V2.feeEscrow,
+        data: encodeFunctionData(escrowItem('claim'), []),
         capturesEthDelta: true,
       });
       continue;

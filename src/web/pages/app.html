@@ -416,7 +416,8 @@ async function saveAgentToken() {
     $('token').value = r.agent.target_token || '';
     const ti = r.tokenInfo;
     out.innerHTML = value
-      ? `<div class="note ok">Saved. ${ti?.erc20 ? esc((ti.erc20.symbol || '') + ' ' + (ti.erc20.name || '')) + ' — ' : ''}launched through pons ✓</div>`
+      ? `<div class="note ok">Saved. ${ti?.erc20 ? esc((ti.erc20.symbol || '') + ' ' + (ti.erc20.name || '')) + ' — ' : ''}launched through pons${ti?.version === 'v2' ? ' v2 (' + esc(ti.v2?.phaseName || 'bonding curve') + ')' : ''} ✓</div>` +
+        (ti?.note ? `<div class="note warn">${esc(ti.note)}</div>` : '')
       : '<div class="note">Target token cleared.</div>';
   } catch (e) {
     out.innerHTML = `<div class="note bad">${esc(e.message)}</div>`;
@@ -758,13 +759,15 @@ $('delegBtn').onclick = async () => {
       <div class="kv"><span>token checked</span><span class="mono">${esc((d.token||'—').slice(0,14))}…</span></div>
       ${ti.erc20 ? `<div class="kv"><span>token name</span><span>${esc(ti.erc20.symbol || '')} ${esc(ti.erc20.name || '')}</span></div>` : ''}
       <div class="kv"><span>launched through pons</span><span>${
-        ti.isPonsToken === true ? 'yes ✓' : ti.checked === false ? 'could not check' : 'no'
+        ti.isPonsToken === true ? (ti.version === 'v2' ? 'yes ✓ · v2 (' + esc(ti.v2?.phaseName || 'bonding curve') + ')' : 'yes ✓ · v1') : ti.checked === false ? 'could not check' : 'no'
       }</span></div>
-      ${ti.verdict ? `<div class="note ${ti.checked === false ? 'warn' : 'bad'}">${esc(ti.verdict)}</div>` : ''}`;
+      ${ti.verdict ? `<div class="note ${ti.checked === false ? 'warn' : 'bad'}">${esc(ti.verdict)}</div>` : ''}
+      ${ti.note ? `<div class="note warn">${esc(ti.note)}</div>` : ''}`;
 
     $('delegOut').innerHTML = tokenBlock + `
       <div class="kv"><span>current payout</span><span class="mono">${esc((st.feeRecipient||'—').slice(0,14))}…</span></div>
       <div class="kv"><span>points to agent</span><span>${st.redirectedToAgent?'yes ✓':'no'}</span></div>
+      ${st.version === 'v2' && st.pending ? `<div class="kv"><span>claimable in escrow</span><span>${esc(String(Number(st.pending.inEscrow || 0) / 1e18))} ETH</span></div>` : ''}
       ${d.deployer ? `<div class="kv"><span>token launched by</span><span class="mono">${esc(d.deployer.slice(0,14))}…</span></div>` : ''}
       ${d.transactions.map((t,i)=>{
         const sim = t.simulation || {};

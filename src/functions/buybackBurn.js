@@ -7,7 +7,7 @@
 // vai refletir a queima. Por isso o módulo devolve `circulatingSupply` e o painel
 // mostra os dois números.
 import { BURN_ADDRESS, NULL_ADDRESS, TOKEN_ABI, abiItem } from '../chain/config.js';
-import { simulateSwap, formatUnits, parseUnits } from '../market/pricing.js';
+import { estimateBuy, formatUnits, parseUnits } from '../market/pricing.js';
 import { FEE } from '../agent/fee.js';
 
 export const spec = {
@@ -83,15 +83,20 @@ export async function plan(ctx, params) {
     }
   }
 
-  const spendable = balances.eth + balances.weth;
+  // Na bonding curve (pons v2) a compra é paga em ETH nativo, direto no
+  // `buy`; WETH não serve lá. Na pool V3 o WETH conta, porque o swap é em WETH.
+  const spendable = state.venue === 'curve' ? balances.eth : balances.eth + balances.weth;
   if (spendable < amountIn || amountIn <= 0n) {
     return { decisions: [], notes: [...notes, `insufficient balance: has ${formatUnits(spendable, 18)} ETH, needs ${formatUnits(amountIn, 18)}`] };
   }
 
-  const sim = simulateSwap({
-    sqrtPriceX96: state.sqrtPriceX96, liquidity: state.liquidity, amountIn,
-    side: 'buy', isToken0: state.isToken0, feePips: state.poolFee ?? 10000,
-  });
+  let sim;
+  try { sim = estimateBuy(state, amountIn); }
+  catch (err) { return { decisions: [], notes: [...notes, err.message] }; }
+  if (state.venue === 'curve') {
+    notes.push('pons v2: buying straight from the bonding curve, in ETH');
+    if (sim.refund > 0n) notes.push(`only ${formatUnits(sim.spent, 18)} ETH fits before the curve sells out; the rest is refunded in the same transaction`);
+  }
 
   if (sim.crossedRangeRisk) notes.push('order is large for this pool depth; the estimate loses accuracy');
 

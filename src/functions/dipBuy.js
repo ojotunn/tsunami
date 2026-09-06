@@ -9,7 +9,7 @@
 // — ninguém que não tivesse escrito o parser adivinharia a sintaxe, e errar a
 // pontuação virava erro de validação em vez de compra. Agora são dois números
 // em português claro: de quanto é a queda, e quanto comprar. Um degrau só.
-import { parseUnits, formatUnits, simulateSwap, tokenPriceInPair } from '../market/pricing.js';
+import { parseUnits, formatUnits, estimateBuy, tokenPriceInPair } from '../market/pricing.js';
 import { withSlippage } from './buybackBurn.js';
 
 export const spec = {
@@ -112,10 +112,9 @@ export async function plan(ctx, params) {
     return { decisions: [], notes: [...notes, `the ${step.dropBps / 100}% drop was reached, but the agent only has ${formatUnits(balances.eth, 18)} ETH`] };
   }
 
-  const sim = simulateSwap({
-    sqrtPriceX96: state.sqrtPriceX96, liquidity: state.liquidity, amountIn,
-    side: 'buy', isToken0: state.isToken0, feePips: state.poolFee ?? 10000,
-  });
+  let sim;
+  try { sim = estimateBuy(state, amountIn); }
+  catch (err) { return { decisions: [], notes: [...notes, err.message] }; }
 
   const steps = [{ action: 'swap', side: 'buy', amountInWei: amountIn.toString(), minOutWei: withSlippage(sim.amountOut, 150).toString() }];
   if (params.destination === 'burn') {

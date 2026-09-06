@@ -15,6 +15,7 @@ import { applyFee } from './fee.js';
 import { protocolLimits, dexRouting } from './guards.js';
 import { simulateSwap, tokenPriceInPair, formatUnits, parseUnits } from '../market/pricing.js';
 import { lockerItem } from '../chain/locker.js';
+import { detectV2, curveState, quoteCurveBuy, curveSpotPrice, v2FactoryItem, escrowItem, V2 } from '../chain/v2.js';
 import { encodeFunctionData } from '../core/abi.js';
 
 const PROBE = '0x00000000000000000000000000000000000000A1';   // origem fictícia da simulação
@@ -64,6 +65,14 @@ export async function preflight(rpc, token, amountEth = '0.005', { from = PROBE 
   const launched = await rpc
     .read(CONTRACTS.factory, abiItem(FACTORY_ABI, 'getLaunchedToken'), [token])
     .catch(() => null);
+  if (!launched?.exists) {
+    // A V1 não conhece o token; pode ser um lançamento V2 (bonding curve).
+    const v2 = await detectV2(rpc, token).catch(() => null);
+    if (v2) {
+      add('launched by the pons v2 factory', true, `phase: ${v2.phaseName}`);
+      return preflightV2(rpc, token, amountEth, { from, report, add, v2 });
+    }
+  }
   add('launched by this factory', !!launched?.exists, launched?.exists ? `dexId ${launched.dexId}` : 'not found');
   if (!launched?.exists) return report;
 
@@ -197,6 +206,117 @@ export async function preflight(rpc, token, amountEth = '0.005', { from = PROBE 
     if (!res.ok) break;                           // não adianta seguir depois de um revert
   }
 
+  if (overrideSupported === false) {
+    report.warnings.push(
+      'this RPC does not accept state overrides on eth_call, so the buy could not be simulated end to end. ' +
+      'An Alchemy endpoint (PONS_RPC_URL) supports it, or fund the agent and run "execute" as a dry run.',
+    );
+  }
+  report.simulated = overrideSupported === true;
+  return report;
+}
+
+/**
+ * Pons v2. As perguntas são outras: a curva ainda está aberta? o par é ETH?
+ * quanto a compra receberia, pela aritmética do contrato? quem recebe as
+ * taxas hoje, e a troca de recebedor é mesmo restrita a ele? E, como na V1,
+ * a rota compila e — se a RPC deixar — simula ponta a ponta.
+ */
+async function preflightV2(rpc, token, amountEth, { from, report, add, v2 }) {
+  report.version = 'v2';
+  add('v2 factory has code', await hasCode(rpc, V2.factory), V2.factory);
+  add('fee escrow has code', await hasCode(rpc, V2.feeEscrow), V2.feeEscrow);
+  add('bonding curve has code', await hasCode(rpc, v2.curve), v2.curve);
+  add('paired with ETH', v2.nativeQuote, v2.nativeQuote ? 'native ETH' : `pair token ${v2.pairToken} — not supported`);
+  add('curve still open', v2.phase === 0, v2.phase === 0 ? 'buys go to the curve' : `${v2.phaseName} — trading moved to Uniswap v4`);
+
+  // Delegação: só o recebedor atual pode apontar o agente. Um endereço sem
+  // relação com o token tem que ser recusado — se passasse, qualquer um
+  // poderia sequestrar as taxas de qualquer lançamento.
+  report.feeRecipient = v2.creatorFeeRecipient;
+  const transferData = encodeFunctionData(v2FactoryItem('transferCreatorFeeRecipient'), [token, from]);
+  const probe = await rpc
+    .call('eth_call', [{ from, to: V2.factory, data: transferData }, 'latest'])
+    .then(() => ({ allowed: true }))
+    .catch((e) => ({ allowed: false, reason: String(e.message) }));
+  if (probe.allowed) {
+    add('fee recipient transfer is access-controlled', false, 'a stranger could redirect the creator fees — do not use this launch');
+    report.delegation = 'open';
+  } else {
+    add('fee recipient transfer is access-controlled', true, 'restricted to the current creator fee recipient, as expected');
+    report.delegation = 'recipient-signed';
+    report.notes.push(
+      'on pons v2 the creator hands the agent their fees with one signature of transferCreatorFeeRecipient. ' +
+      'From then on the fee escrow credits the agent, and the agent sweeps and claims on its own.',
+    );
+  }
+  const owed = await rpc.read(V2.feeEscrow, escrowItem('balanceOf'), [v2.creatorFeeRecipient]).catch(() => null);
+  if (owed !== null) report.notes.push(`the current recipient has ${formatUnits(owed, 18)} ETH claimable in the fee escrow`);
+
+  if (v2.phase !== 0) {
+    report.warnings.push('this launch has graduated to a Uniswap v4 pool; buying there is not supported yet, only reward collection');
+    report.simulated = false;
+    return report;
+  }
+  if (!v2.nativeQuote) {
+    report.warnings.push('this launch is paired with an ERC-20, not ETH; the agent only trades and collects in ETH');
+    report.simulated = false;
+    return report;
+  }
+
+  // Mercado: as reservas da curva e a cotação pela aritmética do contrato.
+  const curve = await curveState(rpc, v2.curve, { recipient: from }).catch(() => null);
+  const decimals = await rpc.read(token, abiItem(TOKEN_ABI, 'decimals')).catch(() => 18n);
+  const amountIn = parseUnits(amountEth, 18);
+  let expected = null;
+  if (curve && curve.tokenReserve > 0n) {
+    expected = quoteCurveBuy({ quoteIn: amountIn, ...curve });
+    add('curve has reserves', true, `${formatUnits(curve.realQuoteReserve, 18)} / ${formatUnits(curve.graduationThreshold, 18)} ETH raised`);
+    report.market = {
+      pool: `${v2.curve} (bonding curve)`,
+      price: formatUnits(curveSpotPrice(curve), 18, 12),
+      expectedOut: formatUnits(expected.tokensOut, Number(decimals), 4),
+      priceImpactPct: (expected.priceImpactBps / 100).toFixed(2),
+    };
+    if (curve.snipeBps > 0n) report.warnings.push(`the opening snipe tax is still active (${curve.snipeBps} bps) — wait a few seconds`);
+    if (expected.refund > 0n) report.notes.push(`only ${formatUnits(expected.spent, 18)} ETH fits before the curve sells out; the rest would be refunded`);
+    if (expected.priceImpactBps > 150) {
+      report.warnings.push(`a ${amountEth} ETH buy would move the price ${(expected.priceImpactBps / 100).toFixed(2)}% — the default policy caps this at 1.50%`);
+    }
+  } else {
+    add('curve has reserves', false, 'could not read the curve reserves');
+  }
+
+  // Rota real, com a taxa de serviço, e simulação com saldo fictício.
+  const decision = applyFee({
+    kind: 'buyback_burn', token,
+    notionalWei: amountIn.toString(),
+    steps: [
+      { action: 'swap', side: 'buy', amountInWei: amountIn.toString(), minOutWei: expected ? (expected.tokensOut * 99n / 100n).toString() : '0' },
+      { action: 'transfer', to: '0x000000000000000000000000000000000000dEaD', amountRef: 'swap.out' },
+    ],
+  }, { agentAddress: from });
+  const { calls } = await compileDecision({ rpc, decision, agentAddress: from, token });
+  report.route = calls.map((c) => ({
+    label: c.label, to: c.to,
+    selector: c.data ? c.data.slice(0, 10) : '(resolved at run time)',
+    value: c.value ? formatUnits(c.value, 18) + ' ETH' : '0',
+  }));
+  add('route compiles', calls.length >= 2, `${calls.length} transactions (one buy on the curve, then the burn)`);
+
+  const funded = amountIn + 10n ** 17n;
+  let overrideSupported = null;
+  for (const call of calls) {
+    if (!call.data) continue;
+    const res = await callWithBalance(rpc, {
+      from, to: call.to, data: call.data,
+      value: '0x' + BigInt(call.value ?? 0n).toString(16),
+    }, from, funded);
+    if (res.supported === false) { overrideSupported = false; break; }
+    overrideSupported = true;
+    add(`simulate: ${call.label}`, res.ok, res.ok ? 'call succeeded' : res.error?.slice(0, 160));
+    if (!res.ok) break;
+  }
   if (overrideSupported === false) {
     report.warnings.push(
       'this RPC does not accept state overrides on eth_call, so the buy could not be simulated end to end. ' +

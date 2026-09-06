@@ -7,6 +7,7 @@
 import { CONTRACTS, FACTORY_ABI, TOKEN_ABI, abiItem } from './config.js';
 import { isAddress, toChecksumAddress } from '../core/hex.js';
 import { feeRecipient } from './locker.js';
+import { detectV2 } from './v2.js';
 
 const NULL = '0x0000000000000000000000000000000000000000';
 
@@ -82,6 +83,7 @@ export async function inspectToken(rpc, address) {
 
   out.isPonsToken = !!launched?.exists;
   if (out.isPonsToken) {
+    out.version = 'v1';
     out.deployer = launched.deployer;
     out.positionId = launched.positionId?.toString?.() ?? null;
     try {
@@ -89,6 +91,33 @@ export async function inspectToken(rpc, address) {
       out.feeRecipient = current && current !== NULL ? current : null;
     } catch { /* leitura opcional */ }
     out.verdict = null; // está tudo certo: sem veredito é sem problema
+    return out;
+  }
+
+  // A V1 não conhece o token. Antes de afirmar "não é da pons", perguntar à
+  // factory V2: desde a V2 um lançamento nasce numa bonding curve, e a V1 não
+  // tem registro nenhum dele. Mesma regra de honestidade: falha de rede aqui
+  // vira "não sei", nunca "não é".
+  let v2 = null;
+  try { v2 = await detectV2(rpc, out.address); }
+  catch (err) { return unknown(out, err.message); }
+  if (v2) {
+    out.isPonsToken = true;
+    out.version = 'v2';
+    out.deployer = v2.deployer;
+    out.feeRecipient = v2.creatorFeeRecipient;
+    out.v2 = {
+      curve: v2.curve, phase: v2.phase, phaseName: v2.phaseName, graduated: v2.graduated,
+      pairToken: v2.pairToken, nativeQuote: v2.nativeQuote, buybackEnabled: v2.buybackEnabled,
+    };
+    out.verdict = null;
+    if (!v2.nativeQuote) {
+      out.note = `This pons v2 launch is paired with ${v2.pairToken}, not ETH. The agent only trades and ` +
+        'collects in ETH, so the buying functions and reward collection will not work for it.';
+    } else if (v2.graduated) {
+      out.note = 'This pons v2 launch has graduated to a Uniswap v4 pool. Reward collection works; buying ' +
+        'on the v4 pool is not supported by this tool yet.';
+    }
     return out;
   }
 

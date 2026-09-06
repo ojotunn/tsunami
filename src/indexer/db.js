@@ -108,6 +108,7 @@ function migrate(db) {
     );
     CREATE INDEX IF NOT EXISTS idx_decisions_agent ON decisions(agent_id, ts DESC);
   `);
+  addColumns(db, 'tokens', { version: "TEXT DEFAULT 'v1'", curve: 'TEXT', phase: 'INTEGER' });
 }
 
 export const getMeta = (db, key, fallback = null) =>
@@ -130,6 +131,24 @@ export function upsertToken(db, t) {
     String(t.positionId ?? ''), String(t.restrictionsEndBlock ?? ''), String(t.initialBuyAmount ?? ''),
     Number(t.launchBlock ?? 0), t.launchTx ?? null,
   );
+}
+
+/**
+ * Colunas acrescentadas depois do esquema original. `CREATE TABLE IF NOT
+ * EXISTS` não altera tabela existente, então cada uma é adicionada à parte,
+ * só quando falta — o banco de produção já tem as linhas antigas.
+ */
+function addColumns(db, table, columns) {
+  const have = new Set(db.prepare(`PRAGMA table_info(${table})`).all().map((c) => c.name));
+  for (const [name, decl] of Object.entries(columns)) {
+    if (!have.has(name)) db.exec(`ALTER TABLE ${table} ADD COLUMN ${name} ${decl}`);
+  }
+}
+
+/** Pilha da pons a que o token pertence (v1 = pool V3 + locker; v2 = curva + escrow). */
+export function setTokenVersion(db, address, { version, curve = null, phase = null }) {
+  db.prepare('UPDATE tokens SET version = ?, curve = ?, phase = ? WHERE address = ?')
+    .run(version, curve ? curve.toLowerCase() : null, phase === null ? null : Number(phase), address.toLowerCase());
 }
 
 export function updateTokenState(db, address, s) {

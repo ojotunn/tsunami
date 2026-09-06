@@ -6,7 +6,7 @@
 //  2. DCA com capital real é uma estratégia de tesouraria legítima. O que ele NÃO
 //     faz é "criar volume": trades do próprio dono não são demanda, e um gráfico
 //     movimentado por uma única carteira é identificável on-chain por qualquer um.
-import { parseUnits, formatUnits, simulateSwap } from '../market/pricing.js';
+import { parseUnits, formatUnits, estimateBuy } from '../market/pricing.js';
 import { withSlippage } from './buybackBurn.js';
 
 export const spec = {
@@ -62,10 +62,9 @@ export async function plan(ctx, params) {
     return { decisions: [], notes: [`insufficient balance: ${formatUnits(balances.eth, 18)} ETH`] };
   }
 
-  const sim = simulateSwap({
-    sqrtPriceX96: state.sqrtPriceX96, liquidity: state.liquidity, amountIn,
-    side: 'buy', isToken0: state.isToken0, feePips: state.poolFee ?? 10000,
-  });
+  let sim;
+  try { sim = estimateBuy(state, amountIn); }
+  catch (err) { return { decisions: [], notes: [err.message] }; }
 
   const perDay = (24 * 60) / params.intervalMinutes;
   const feeCostYear = parseUnits(params.amountEth, 18) * BigInt(Math.round(perDay * 365)) / 100n;

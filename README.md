@@ -37,6 +37,26 @@ Three pages:
 | Airdrop | a list | Batched distribution to recipients you provide, validated first |
 | Reward the holders | a token balance | Distributes to the real holders read from chain, equal or proportional |
 
+## pons v1 and v2
+
+pons launches tokens on two stacks, and a token belongs to exactly one of them. The
+app asks both factories and adapts; the user does not choose.
+
+| | pons v1 | pons v2 |
+|---|---|---|
+| Where it trades | Uniswap V3 pool from day one | Bonding curve, then a Uniswap V4 pool after graduation |
+| How the agent buys | wrap ETH → approve router → `exactInputSingle` | one `buy` on the curve, ETH sent as value |
+| Where creator rewards live | the locker (`collectFees`) | the curve, swept into the fee escrow (`sweepFees` → `claim`) |
+| Delegation (one signature) | `setFeeRedirect(token, agent)` on the locker | `transferCreatorFeeRecipient(token, agent)` on the factory |
+| Protocol limits | maxTx / maxWallet during the anti-sniping window | none by size; an opening snipe tax that decays in seconds (priced into the quote) |
+
+**Not supported yet on v2:** buying after graduation. A graduated v2 token trades on a
+Uniswap V4 pool, and swapping there needs a router contract with an unlock callback,
+which this project does not ship. The app says so instead of guessing: reward
+collection keeps working after graduation, the buying functions decline with the
+reason, and the ETH stays in the agent wallet, withdrawable at any time. Launches
+paired with an ERC-20 instead of ETH are detected but not operated.
+
 > **About burning:** the pons token has no `burn()` function. Sending to `0x…dEaD`
 > removes coins from circulation, but `totalSupply()` stays at 1B forever. The app
 > reports circulating supply separately so you publish a number that holds up.

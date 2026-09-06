@@ -40,6 +40,11 @@ export const CONTRACTS = {
   locker: process.env.PONS_LOCKER || '0x736D76699C26D0d966744cAe304C000d471f7F35',
   v3Factory: process.env.PONS_V3_FACTORY || '0x1f7d7550B1b028f7571E69A784071F0205FD2EfA',
   weth: process.env.PONS_WETH || '0x0Bd7D308f8E1639FAb988df18A8011f41EAcAD73',
+  // Pons V2 (bonding curve + Uniswap V4). Um token pertence a UMA das duas
+  // pilhas; a detecção pergunta às duas factories. Ver chain/v2.js.
+  v2Factory: process.env.PONS_V2_FACTORY || '0x7eD598BcEf8bd9Edd8C97A195C6d13f40801EC7e',
+  v2FeeEscrow: process.env.PONS_V2_FEE_ESCROW || '0xd3AFEB2a57f70eF218Aa82451c51B2fb0416Ac9e',
+  v2MemeHook: process.env.PONS_V2_MEME_HOOK || '0xE5e702641Ea86F4ae6cC3cDaeD2B886f976Be044',
 };
 
 export const PROTOCOL = {

@@ -1,5 +1,6 @@
 // Matemática de preço e profundidade para pools Uniswap V3.
 // Convenção: sqrtPriceX96 = sqrt(token1/token0) * 2^96, em unidades brutas.
+import { quoteCurveBuy } from '../chain/v2.js';
 
 export const Q96 = 2n ** 96n;
 export const Q192 = 2n ** 192n;
@@ -92,6 +93,30 @@ export function simulateSwap({ sqrtPriceX96, liquidity, amountIn, side, isToken0
     priceImpactBps: impact,                  // aprox: 2 * Δ√P/√P em bps
     crossedRangeRisk: impact > 2000,         // >20% de impacto: simulação pouco confiável
   };
+}
+
+/**
+ * Cotação de compra que sabe ONDE o token negocia. As funções de compra não
+ * precisam saber se o token é V1 (pool V3) ou V2 (bonding curve): passam o
+ * estado e o valor, e recebem a mesma forma de resposta nos dois casos.
+ *
+ * Um token V2 já graduado negocia numa pool Uniswap V4, que exige um router
+ * com callback para ser operada. Este projeto não tem um; a resposta honesta
+ * é recusar com o motivo, não devolver uma cotação de mentira.
+ */
+export function estimateBuy(state, amountIn) {
+  if (state.venue === 'v4') {
+    throw new Error('this launch has graduated to a Uniswap v4 pool, and buying there is not supported yet');
+  }
+  if (state.venue === 'curve') {
+    if (!state.curve) throw new Error('the bonding curve state was not read');
+    const q = quoteCurveBuy({ quoteIn: amountIn, ...state.curve });
+    return { amountOut: q.tokensOut, priceImpactBps: q.priceImpactBps, crossedRangeRisk: q.crossedRangeRisk, spent: q.spent, refund: q.refund };
+  }
+  return simulateSwap({
+    sqrtPriceX96: state.sqrtPriceX96, liquidity: state.liquidity, amountIn,
+    side: 'buy', isToken0: state.isToken0, feePips: state.poolFee ?? 10000,
+  });
 }
 
 /** Quanto do token do par é preciso para mover o preço em `bps`. */

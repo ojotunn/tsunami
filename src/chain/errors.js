@@ -25,12 +25,32 @@ export const LOCKER_ERRORS = [
   { name: 'ZeroAddress', inputs: [] },
 ];
 
+/** Erros da pilha V2 (factory + bonding curve + escrow), da ABI e do fonte verificados. */
+export const V2_ERRORS = [
+  { name: 'NotCreatorFeeRecipient', inputs: [] },
+  { name: 'CurveGraduated', inputs: [] },
+  { name: 'AlreadyGraduated', inputs: [] },
+  { name: 'NotReadyToGraduate', inputs: [] },
+  { name: 'SlippageExceeded', inputs: [{ name: 'actual', type: 'uint256' }, { name: 'minimum', type: 'uint256' }] },
+  { name: 'NativeValueMismatch', inputs: [{ name: 'supplied', type: 'uint256' }, { name: 'expected', type: 'uint256' }] },
+  { name: 'UnexpectedNativeValue', inputs: [] },
+  { name: 'NotFeeSweepOperator', inputs: [] },
+  { name: 'InternalSwapRequiresOperator', inputs: [] },
+  { name: 'MinimumOutputRequired', inputs: [] },
+  { name: 'ZeroAmount', inputs: [] },
+  { name: 'NoPendingChange', inputs: [] },
+  { name: 'TimelockNotElapsed', inputs: [{ name: 'effectiveAt', type: 'uint256' }] },
+  { name: 'TimelockExpired', inputs: [{ name: 'expiresAt', type: 'uint256' }] },
+  { name: 'WrongGraduationPhase', inputs: [] },
+  { name: 'NotInitialized', inputs: [] },
+];
+
 /** Seletor de 4 bytes de um erro, igual ao de função: keccak(nome(tipos))[0..4]. */
 export function errorSelector(err) {
   return keccakHex(`${err.name}(${err.inputs.map((i) => i.type).join(',')})`).slice(0, 10);
 }
 
-const TABLE = new Map(LOCKER_ERRORS.map((e) => [errorSelector(e), e]));
+const TABLE = new Map([...LOCKER_ERRORS, ...V2_ERRORS].map((e) => [errorSelector(e), e]));
 
 const ERROR_STRING = '0x08c379a0'; // Error(string)
 const PANIC = '0x4e487b71';        // Panic(uint256)
@@ -89,6 +109,24 @@ export function explainRevert(decoded, ctx = {}) {
         'launched through pons on this network.';
     case 'NoFeesToCollect':
       return 'There are no creator rewards accumulated yet. Nothing to collect right now.';
+    case 'NotCreatorFeeRecipient':
+      return 'Only the wallet that currently receives this launch\'s creator fees can hand them to the agent (pons v2). ' +
+        'The wallet connected right now is not that wallet.' + who;
+    case 'CurveGraduated':
+    case 'AlreadyGraduated':
+      return 'This launch has finished its bonding curve and now trades on a Uniswap v4 pool. ' +
+        'Buying on the curve is closed; buying on the v4 pool is not supported by this tool yet.';
+    case 'SlippageExceeded':
+      return 'The price moved past the minimum you accepted before the buy landed. Run the agent again for a fresh quote.';
+    case 'NativeValueMismatch':
+      return 'The ETH sent with the buy did not match the amount declared — an internal encoding error, please report it.';
+    case 'NotFeeSweepOperator':
+      return 'Only the pons sweep operator or the current creator fee recipient can sweep this curve. ' +
+        'Point the creator fee recipient at the agent first; the rewards already in the escrow can still be claimed.';
+    case 'InternalSwapRequiresOperator':
+      return 'This launch has buybacks enabled, so only the pons operator can sweep its curve. The escrow balance can still be claimed.';
+    case 'ZeroAmount':
+      return 'The amount in the call is zero.';
     case 'ZeroAddress':
       return 'One of the addresses in the call is empty. Fill in the token address.';
     case 'PositionNotHeld':
